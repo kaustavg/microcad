@@ -1,4 +1,4 @@
-# Microfusion
+# Microcad
 Programmatically draw 3D microfluidic chips in Fusion 360.
 
 ## Overview
@@ -13,17 +13,17 @@ After creating the python script using the objects from this package, we run a s
 2. Place this python package in a folder accessible to PYTHONPATH in your computer, just like any other python package you install. This allows the computer to find the new package when you write programs with it. If you want to add a new location to your computer's PYTHONPATH, you can also run the following python command:
 ```python
 import sys
-sys.path.append(r'C:\Your\Folder\Here\microfusion')
+sys.path.append(r'C:\Your\Folder\Here\microcad')
 ```
-3. Place the file "RunMicrofusion.py" in the "Scripts" folder of your Fusion 360 installation. This is typically located in "C:\Users\YourUserNameHere\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\Scripts\". This is the program that will be run from within Fusion 360 to generate the design.
+3. Place the file "RunMicrocad.py" in the "Scripts" folder of your Fusion 360 installation. This is typically located in "C:\Users\YourUserNameHere\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\Scripts\". This is the program that will be run from within Fusion 360 to generate the design.
 
 ## Annotated Example Script
 As an example we will be drawing a simple common-source amplifier consisting of one transistor, one resistor, and four ports. The entire script to generate this design is given below:
 ```python
-import microfusion as mf
+import microcad as mc
 
 def main():
-	design = mf.Design()
+	design = mc.Design()
 	cir = design.add_circuit()
 	# Circuit Components
 	tran1 = cir.M((0,0,0),anchor='S') # Transistor
@@ -38,21 +38,21 @@ def main():
 	cir.T([sup1.C,tran1.S])
 	cir.T([res1.R,gnd1.C])
 	cir.T([tran1.D+(0,-250),tran1.D+(1000,-250),out1.C],trace_R=100)
-	cir.T([tran1.G1,inp1.C],secs=mf.RecSec(W=250,H=-50))
+	cir.T([tran1.G1,inp1.C],secs=mc.RecSec(W=250,H=-50))
   ```
   
-To run this script in Fusion 360, make sure that RunMicrofusion.py is correctly pointing to our script file. Then in Fusion 360 we navigate to Utilities > Add-Ins > Scripts and Add-Ins > RunMicrofusion.py. The drawing process should be done in a few seconds.
+To run this script in Fusion 360, make sure that RunMicrocad.py is correctly pointing to our script file. Then in Fusion 360 we navigate to Utilities > Add-Ins > Scripts and Add-Ins > RunMicrocad.py. The drawing process should be done in a few seconds.
 
 We now explain each line in the above example script.
 
 ```python
-import microfusion as mf
+import microcad as mc
 
 def main():
-	design = mf.Design()
+	design = mc.Design()
 	cir = design.add_circuit()
 ```
-This imports microfusion and defines the function that RunMicrofusion.py will run (which must be called "main").
+This imports microcad and defines the function that RunMicrocad.py will run (which must be called "main").
 
 We start by creating a new Design object, for which you should probably have only one per file. The Design object can hold multiple circuits. You can set various default drawing parameters here (like drawing scale, trace widths, and even liquid viscosity used to calculate resistances), and these default parameters will automatically pass down to all daughter Circuits objects drawn in this Design object. For a list of these parameters, please see the end of this document.
 
@@ -66,9 +66,9 @@ In this Design object, we then create a new Circuit object. This is another chan
 ```
 We start by adding a transistor to our circuit using the M function. Here we specify that the transistor is drawn such that the source terminal (S) is located at the origin. Other terminals (D, G1, G2) could just as easily be specified as the anchor point. We also name this transistor object 'tran1'. Here we drew this transistor with all the default settings for length, width, height, etc. but you could easily overwrite these defaults for this particular transistor by specifying keyword arguments.
 
-Next we draw a short trace starting at the drain of the tranistor and extending 500um down. The T function takes in a list of any number of Points in 3D space and connects them all up with a smooth trace. Note that these points can be plain tuples (as we used to define the position of the transistor) or we can use the microfusion Point object which has some useful features.
+Next we draw a short trace starting at the drain of the tranistor and extending 500um down. The T function takes in a list of any number of Points in 3D space and connects them all up with a smooth trace. Note that these points can be plain tuples (as we used to define the position of the transistor) or we can use the microcad Point object which has some useful features.
 
-The first point in our trace is specified as the drain terminal of the transistor we made already (tran1.D). This way, if we move or modify the transistor, the trace moves along with it automatically. Internally, this first point is represented not as a tuple, but as a microfusion Point object. This means we can do intuitive operations on this point, like shifting it by 500um down by simply "adding" a tuple to it, which we have used for the second point in the trace. Note that if you do not specify the z coordinate, the program assumes a value of 0.
+The first point in our trace is specified as the drain terminal of the transistor we made already (tran1.D). This way, if we move or modify the transistor, the trace moves along with it automatically. Internally, this first point is represented not as a tuple, but as a microcad Point object. This means we can do intuitive operations on this point, like shifting it by 500um down by simply "adding" a tuple to it, which we have used for the second point in the trace. Note that if you do not specify the z coordinate, the program assumes a value of 0.
 
 We then draw a resistor connected to the endpoint of the trace we just drew (trace1.P2). We specify that the resistance should be 50 kPa s/ul, and the computer will automatically size and draw a serpentine channel to meet this desired value. Similar to the transistor, we specify that the left side of the resistor (L) is the anchor point for drawing the component. Here we also specify an optional drawing parameter, rotation, using a keyword argument.
 
@@ -77,7 +77,7 @@ We then draw a resistor connected to the endpoint of the trace we just drew (tra
 	sup1 = cir.P(tran1.S+(0,5000)) # Supply Port
 	gnd1 = cir.P(res1.R+(0,-5000)) # Ground Port
 ```
-Like before, we are just adding new circuit components by specifying their position relative to existing Points in the circuit. Here we see the usefullness of using microfusion Points, since we can easily add tuples to move the points around. These ports will automatically generate a barb head facing upwards for tubing.
+Like before, we are just adding new circuit components by specifying their position relative to existing Points in the circuit. Here we see the usefullness of using microcad Points, since we can easily add tuples to move the points around. These ports will automatically generate a barb head facing upwards for tubing.
 The supply port is located above the transistor source terminal (S) and the ground port is located below the resistor right terminal (R)
 
 ```python
@@ -97,7 +97,7 @@ Like our earlier trace, we are just connecting existing element terminals, in th
 
 ```python
 	cir.T([tran1.D+(0,-250),tran1.D+(1000,-250),out1.C],trace_R=100)
-	cir.T([tran1.G1,inp1.C],secs=mf.RecSec(W=250,H=-50))
+	cir.T([tran1.G1,inp1.C],secs=mc.RecSec(W=250,H=-50))
 ```
 Traces can draw between any number of Points in a list. Here we also specify an optional drawing parameter for the trace, a radius-of-curvature of 100um.
 
@@ -107,7 +107,7 @@ Here, we make a rectangular channel from the gate of the transistor to the input
 
 ## Details
 ### Points
-Microfusion Point objects support the following operations (between a Point/Point, Tuple/Point, or a Point/Tuple, but not Tuple/Tuple)
+Microcad Point objects support the following operations (between a Point/Point, Tuple/Point, or a Point/Tuple, but not Tuple/Tuple)
 |Symbol| Operation|
 |:---:|:---|
 |+ | Add in x, y, and z|

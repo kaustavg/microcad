@@ -14,14 +14,14 @@ Make bus lines deep (200um).
 '''
 
 import sys
-sys.path.append(r'C:\Users\Kaustav\Documents\Python\microfusion')
-import microfusion as mf
+sys.path.append(r'C:\Users\Kaustav\Documents\Python\microcad')
+import microcad as mc
 
 
 # Script to draw everything
 def main():
-	# Create a microfusion CAD drawing
-	design = mf.Design() # Units are such that 1mm in drawing = 1mm
+	# Create a microcad CAD drawing
+	design = mc.Design() # Units are such that 1mm in drawing = 1mm
 
 	xstage = 51.64e3 # x size
 	ystage = 29.05e3 # y size
@@ -49,10 +49,10 @@ def main():
 	moat_H = 50
 	
 	# Do two sets of traces on top and bottom
-	lo = lambda w: mf.RectSect(W=w,H=-H)
-	hi = lambda w: mf.RectSect(W=w,H=H)
-	buslo = lambda w: mf.RectSect(W=w,H=-bus_H)
-	bushi = lambda w: mf.RectSect(W=w,H=bus_H)
+	lo = lambda w: mc.RectSect(W=w,H=-H)
+	hi = lambda w: mc.RectSect(W=w,H=H)
+	buslo = lambda w: mc.RectSect(W=w,H=-bus_H)
+	bushi = lambda w: mc.RectSect(W=w,H=bus_H)
 
 	# p1 = cir.origin + (1000,0)
 	# p2 = p1 + (500,-1000,0)
