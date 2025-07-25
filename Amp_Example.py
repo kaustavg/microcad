@@ -1,10 +1,10 @@
 import sys
-sys.path.append(r'C:\Users\Kaustav\Documents\Python\microfusion')
+sys.path.append(r'C:\Users\Kaustav\Documents\Python\microcad')
 
-import microfusion as mf
+import microcad as mc
 
 def main():
-	design = mf.Design()
+	design = mc.Design()
 	cir = design.add_circuit()
 	# Circuit Components
 	tran1 = cir.M((0,0,0),anchor='S') # Transistor
@@ -19,4 +19,4 @@ def main():
 	cir.T([sup1.C,tran1.S])
 	cir.T([res1.R,gnd1.C])
 	cir.T([tran1.D+(0,-250),tran1.D+(1000,-250),out1.C],trace_R=100)
-	cir.T([tran1.G1,inp1.C],secs=mf.RecSec(W=250,H=-50))
+	cir.T([tran1.G1,inp1.C],secs=mc.RecSec(W=250,H=-50))
