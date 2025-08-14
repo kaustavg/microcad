@@ -40,7 +40,7 @@ class Design:
 		for key in params: # Overwrite the defaults
 			self.params[key] = params[key]
 
-		self.units = Pt().units # Get units from Point class
+		self.units = Pt().units # Get units from Point class (TODO: can remove this when backend is implemented)
 
 		self.circuits = [] # List of all circuits
 

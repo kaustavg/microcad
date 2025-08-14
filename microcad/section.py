@@ -158,7 +158,7 @@ class TubeSec(Section):
 	def draw(self,circuit,pc,n):
 		'''Return the path centered around pc normal to n.'''
 		# Here we draw the section normal to x axis, then rotate it.
-		m = 32 # Number of facets to make up the tube
+		m = 16 # Number of facets to make up the tube
 		R = self.R
 
 		px = [0 for i in range(m)];
