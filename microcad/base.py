@@ -14,7 +14,7 @@ def printm(message):
 	ui.messageBox(message)
 
 class Design:
-	def __init__(self,origin=Pt(0,0,0),params=dict()):
+	def __init__(self,backend='fusion',origin=Pt(0,0,0),params=dict()):
 		'''Construct the Design object.'''
 		
 		self.origin = origin # Origin wrt Fusion origin
@@ -40,20 +40,16 @@ class Design:
 		for key in params: # Overwrite the defaults
 			self.params[key] = params[key]
 
-		self.units = Pt().units # Get units from Point class (TODO: can remove this when backend is implemented)
-
 		self.circuits = [] # List of all circuits
 
-		# TBD: Clear all elements on every rerun
+		# TODO: Clear all elements on every rerun
 
-		# Set up the app
-		self._app = adsk.core.Application.get()
-		self._ui = self._app.userInterface
-		self._product = self._app.activeProduct
-		self._design = adsk.fusion.Design.cast(self._product)
-		# Do not capture design history for speed
-		self._design.designType = adsk.fusion.DesignTypes.DirectDesignType
-		self._root_comp = self._design.rootComponent
+		# Set up the appropriate backend
+		if backend is 'fusion':
+			self.backend = FusionBackend()
+		else:
+			raise NotImplementedError
+
 
 	def add_circuit(self,*args,**kwargs):
 		'''Add a circuit to the design.'''
@@ -69,7 +65,7 @@ class Design:
 		right = origin + Pt(xlen/2,0,zspan[0])
 		substrate = circuit.T([left,right],
 			secs=RecSec(W=ylen,H=zspan[1]-zspan[0]))
-		# Perform intersection with 
+		
 
 class Circuit:
 	def __init__(self,design,origin=Pt(0,0,0),**kwargs):
@@ -84,26 +80,12 @@ class Circuit:
 
 		self.elements = [] # List of all elements
 
-		# Create the circuit component and sketchplane
-		self._occ = self.design._root_comp.occurrences.addNewComponent(
-			adsk.core.Matrix3D.create())
-		self._comp = self._occ.component
-		self._sketch = self._comp.sketches.add(
-			self._comp.xYConstructionPlane)
-		self._sketch.isComputeDeferred = True # Saves time evaluating
-		self._sketch.areProfilesShown = False # Saves time drawing
-		self._sketch.isLightBulbOn = False # Reduce visual clutter
+		# Create appropriate component for the design's backend
+		self.component = self.design.backend.create_component()
 
 	def clean_sketch(self):
 		'''Deletes the existing sketch and creates a fresh sketch for performance improvements.'''
-		# Fusion becomes much slower the more objects you add to a sketch
-		# Run each time after finished drawing a new element
-		self._sketch.deleteMe()
-		self._sketch = self._comp.sketches.add(
-			self._comp.xYConstructionPlane)
-		self._sketch.isComputeDeferred = True # Saves time evaluating
-		self._sketch.areProfilesShown = False # Saves time drawing
-		self._sketch.isLightBulbOn = False # Reduce visual clutter
+		self.design.backend.clean_component(self.component)
 
 	## Elements
 	def T(self,*args,**kwargs):

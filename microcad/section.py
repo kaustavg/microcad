@@ -2,8 +2,6 @@
 Section classes.
 '''
 
-import adsk.core, adsk.fusion, traceback
-
 import math
 
 from .point import *
@@ -42,12 +40,14 @@ class RecSec(Section):
 		roty = [rotm[1][0]*px[i]+rotm[1][1]*py[i] for i in range(len(py))]
 		pts = [Pt(rotx[i],roty[i],pz[i]) for i in range(len(px))]
 		pts = [pt+pc for pt in pts] # Offset by center point
-		# Draw in fusion
-		collection = adsk.core.ObjectCollection.create()
+		
+		# Draw in backend
+		backend = circuit.design.backend
+		comp = circuit.component
+		segs = []
 		for i in range(len(pts)):
-			collection.add(circuit._sketch.sketchCurves.sketchLines
-				.addByTwoPoints(pts[i-1].acadPoint3D,pts[i].acadPoint3D))
-		path = circuit._comp.features.createPath(collection)
+			segs.append(backend.create_seg(comp,pts[i-1],pts[i]))
+		path = backend.create_path(comp,segs)
 		return path
 
 class CurveSec(Section):
@@ -89,27 +89,18 @@ class CurveSec(Section):
 		roty = [rotm[1][0]*px[i]+rotm[1][1]*py[i] for i in range(len(py))]
 		pts = [Pt(rotx[i],roty[i],pz[i]) for i in range(len(px))]
 		pts = [pt+pc for pt in pts] # Offset by center point
-		# Draw in fusion
+
+		# Draw in backend
+		backend = circuit.design.backend
+		comp = circuit.component
 		segs = []
 		for i in range(len(pts)):
-			seg = circuit._sketch.sketchCurves.sketchLines.addByTwoPoints(
-				pts[i-1].acadPoint3D,pts[i].acadPoint3D)
-			segs.append(seg)
-		# Add fillets
-		arc1 = circuit._sketch.sketchCurves.sketchArcs.addFillet(
-			segs[2],segs[2].endSketchPoint.geometry,
-			segs[3],segs[3].startSketchPoint.geometry,
-			abs(R)*circuit.design.units)
-		arc2 = circuit._sketch.sketchCurves.sketchArcs.addFillet(
-			segs[-1],segs[-1].endSketchPoint.geometry,
-			segs[0],segs[0].startSketchPoint.geometry,
-			abs(R)*circuit.design.units)
-		collection = adsk.core.ObjectCollection.create()
+			segs.append(backend.create_seg(comp,pts[i-1],pts[i]))
+		# Add fillets at bottom
+		arc1 = backend.fillet_2_segs(comp,segs[2],segs[3],R)
+		arc2 = backend.fillet_2_segs(comp,segs[-1],segs[0],R)
 		objs = segs[:3]+[arc1]+[segs[3]]+[arc2] # Add in order
-		for obj in objs:
-			if obj.isValid:
-				collection.add(obj)
-		path = circuit._comp.features.createPath(collection)
+		path = backend.create_path(comp,objs)
 		return path
 
 class TrapzSec(Section):
@@ -140,13 +131,15 @@ class TrapzSec(Section):
 		roty = [rotm[1][0]*px[i]+rotm[1][1]*py[i] for i in range(len(py))]
 		pts = [Pt(rotx[i],roty[i],pz[i]) for i in range(len(px))]
 		pts = [pt+pc for pt in pts] # Offset by center point
-		# Draw in fusion
-		collection = adsk.core.ObjectCollection.create()
+
+		# Draw in backend
+		backend = circuit.design.backend
+		comp = circuit.component
+		segs = []
 		for i in range(len(pts)):
-			if (pts[i-1]-pts[i]).m > 1e-3:
-				collection.add(circuit._sketch.sketchCurves.sketchLines
-					.addByTwoPoints(pts[i-1].acadPoint3D,pts[i].acadPoint3D))
-		path = circuit._comp.features.createPath(collection)
+			if (pts[i-1]-pts[i]).m > 1e-3: continue
+			segs.append(backend.create_seg(comp,pts[i-1],pts[i]))
+		path = backend.create_path(comp,segs)
 		return path
 
 class TubeSec(Section):
@@ -172,10 +165,11 @@ class TubeSec(Section):
 		roty = [rotm[1][0]*px[i]+rotm[1][1]*py[i] for i in range(len(py))]
 		pts = [Pt(rotx[i],roty[i],pz[i]) for i in range(len(px))]
 		pts = [pt+pc for pt in pts] # Offset by center point
-		# Draw in fusion
-		collection = adsk.core.ObjectCollection.create()
+		# Draw in backend
+		backend = circuit.design.backend
+		comp = circuit.component
+		segs = []
 		for i in range(len(pts)):
-			collection.add(circuit._sketch.sketchCurves.sketchLines
-				.addByTwoPoints(pts[i-1].acadPoint3D,pts[i].acadPoint3D))
-		path = circuit._comp.features.createPath(collection)
+			segs.append(backend.create_seg(comp,pts[i-1],pts[i]))
+		path = backend.create_path(comp,segs)
 		return path

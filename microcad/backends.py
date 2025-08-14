@@ -23,12 +23,14 @@ Each backend must support the following operations:
 
 '''
 
+from .point import *
+
 import math
 
 class CADBackend:
 	pass
 
-class FusionBackend:
+class FusionBackend(CADBackend):
 	def __init__(self):
 		'''Fusion 360 backend constructor'''
 		
@@ -50,6 +52,9 @@ class FusionBackend:
 		'''Return the appropriate CAD point for the given Point object.'''
 		return adsk.core.Point3D.create(
 			float(pt.x*self.units),float(pt.y*self.units),float(pt.z*self.units))
+	def cad2pt(self,cadpt):
+		'''Return a Point object for a CAD point.'''
+		return Pt(cadpt.x/self.units,cadpt.y/self.units,cadpt.z/self.units)
 
 	def create_component(self):
 		'''Return a new Fusion component including sketchplane (for a new circuit).'''
@@ -78,14 +83,19 @@ class FusionBackend:
 		sketchline = sketch.sketchCurves.sketchLines.addByTwoPoints(self.pt2cad(pt1),self.pt2cad(pt2))
 		return sketchline
 
-	def fillet_2_segs(self,comp,seg1,seg2,R):
-		'''Create a fillet between two sketchlines (modifying them) and return the sketcharc.'''
+	def fillet_2_segs(self,comp,seg1,seg2,R,return_endpts=False):
+		'''Create a fillet between two sketchlines (modifying them) and return the sketcharc. Optionally return endpts of arc.'''
 		sketch = comp.sketches.item(0) # Get the sketch of the component
 		sketcharc = sketch.sketchCurves.sketchArcs.addFillet(
 					seg1, seg1.endSketchPoint.geometry,
 					seg2, seg2.startSketchPoint.geometry,
-					R*self.units)
-		return sketcharc
+					abs(R)*self.units)
+		if return_endpts:
+			return sketcharc, 
+				self.cad2pt(seg1.endSketchPoint.geometry), 
+				self.cad2pt(seg2.startSketchPoint.geometry)
+		else:
+			return sketcharc
 
 	def create_path(self,comp,objs):
 		'''Return a path made from list of sketchlines and sketcharcs.'''
@@ -96,7 +106,7 @@ class FusionBackend:
 		path = comp.features.createPath(collection)
 		return path
 
-	def loft(self,comp,path,secs):
+	def create_loft(self,comp,path,secs):
 		'''Return a loft from a path and multiple sections.'''
 		# Maybe you don't need to create a new object collection here?
 		loft_inp = self.comp.features.loftFeatures.createInput(
@@ -107,5 +117,5 @@ class FusionBackend:
 		# Add center line
 		loft_inp.centerLineOrRails.addCenterLine(path)
 		loft_inp.isSolid = True
-		lofted = comp.features.loftFeatures.add(loft_inp)
-		return lofted
+		loft = comp.features.loftFeatures.add(loft_inp)
+		return loft

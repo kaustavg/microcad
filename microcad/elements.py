@@ -1,8 +1,6 @@
 '''
 Elements classes.
 '''
-import adsk.core, adsk.fusion, traceback
-
 import math
 import copy
 
@@ -29,69 +27,55 @@ class Trace:
 		# Drawing parameters
 		eps = 1e-3
 		Rs = self.params['trace_R']
-		if not isinstance(Rs,list):
+		if not isinstance(Rs,list): # Expand Rs to fill list
 			Rs = [Rs for i in range(len(pts))]
 		# Avoid self-intersections by ensuring R>sec.span/2
 		Rs = [max(Rs[i],secs[i].span/2+eps) for i in range(len(pts))]
+		# Check for length mismatches
+		assert len(pts) == len(secs)
+		assert len(pts) == len(Rs)
 
-		# Helper function to draw a loft
-		def makeLoft(curve,s1,s2,n1,n2):
-			# Make object collection
-			skel = adsk.core.ObjectCollection.create()
-			if not curve.isValid:
-				return
-			skel.add(curve)
-			skel_path = circuit._comp.features.createPath(skel)
-			# Prepare Loft
-			loft_inp = circuit._comp.features.loftFeatures.createInput(
-			adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
-			# Draw the sections
-			p1 = Pt(curve.startSketchPoint.geometry)
-			p2 = Pt(curve.endSketchPoint.geometry)
-			if n1.x*n2.y - n2.x*n1.y < 0:
-				n1,n2 = n2,n1
-				asec1 = s1.draw(circuit,p1,n1)
-				asec2 = s2.draw(circuit,p2,n2)
-				if asec2.isValid:
-					loft_inp.loftSections.add(asec2)
-				if asec1.isValid:
-					loft_inp.loftSections.add(asec1)
-			else:
-				asec1 = s1.draw(circuit,p1,n1)
-				asec2 = s2.draw(circuit,p2,n2)
-				if asec1.isValid:
-					loft_inp.loftSections.add(asec1)
-				if asec2.isValid:
-					loft_inp.loftSections.add(asec2)
-			loft_inp.centerLineOrRails.addCenterLine(skel_path)
-			loft_inp.isSolid = True
-			circuit._comp.features.loftFeatures.add(loft_inp)
+		# Two growing lists of segs and hoops
+		# Step from point to point:
+		# - Compute prior normal and next normal from prior seg
+		# - If not colinear: segs.append fillet, then segs.append next seg
+		# - 				also, hoops.append sec at fillet start and end 
+		# - If colinear: just segs.append new seg and hoops.append sec
+		# Loft segs and hoops
 
-		# Draw the segments
-		sketch = circuit._sketch
-		asegs = []
-		for i in range(1,len(pts)):
-			asegs.append(sketch.sketchCurves.sketchLines.addByTwoPoints(
-				pts[i-1].acadPoint3D,pts[i].acadPoint3D))
-		# Fillet the non-colinear points and loft the arcs
-		aarcs = []
+		backend = circuit.design.backend
+		comp = circuit.component
+		# Compute unit normals
+		us = []
+		for i in range(len(pts)-1):
+			d = pts[i+1]-pts[i]
+			us[i] = d/d.m
+		
+		# Initialize growing lists of segs and hoops
+		segs = [backend.create_seg(comp,pts[0],pts[1])]
+		hoops = [secs[0].draw(circuit,pts[0],u[0])]
+
+		# Step through points
 		for i in range(1,len(pts)-1):
-			n1 = pts[i]-pts[i-1] # TODO make this a Pt operation
-			u1 = n1/n1.m
-			n2 = pts[i+1]-pts[i]
-			u2 = n2/n2.m
-			# Fillet and loft arc only if not colinear
-			if not math.isclose(abs(u1.x*u2.x + u1.y*u2.y),1):
-				arc = sketch.sketchCurves.sketchArcs.addFillet(
-					asegs[i-1], asegs[i-1].endSketchPoint.geometry,
-					asegs[i], asegs[i].startSketchPoint.geometry,
-					Rs[i]*circuit.design.units)
-				makeLoft(arc,secs[i],secs[i],n1,n2)
-			# Loft prior segment with new coordinates after filleting
-			makeLoft(asegs[i-1],secs[i-1],secs[i],n1,n1)
-		# Loft final segment
-		n2 = pts[-1]-pts[-2]
-		makeLoft(asegs[-1],secs[-2],secs[-1],n2,n2)
+			isColinear = math.isclose((u[i]-u[i-1]).m,0)
+			nextseg = backend.create_seg(comp,pts[i],pts[i+1])
+			if not isColinear:
+				fillet,start,end = backend.fillet_2_segs(comp,
+					segs[-1],nextseg,Rs[i],return_endpts=True)
+				segs.append(fillet)
+				segs.append(nextseg)
+				hoops.append(secs[i].draw(circuit,start,u[i-1]))
+				hoops.append(secs[i].draw(circuit,end,u[i]))
+			else: # Colinear
+				segs.append(nextseg)
+				hoops.append(secs[i].draw(circuit,pts[i],u[i]))
+
+		# Add final hoop
+		hoops.append(secs[-1].draw(circuit,pts[-1],u[-1]))
+
+		# Make path and loft
+		path = backend.create_path(comp,segs)
+		loft = backend.create_loft(comp,path,hoops)
 
 		# Draw endcaps (TBD: 'square' is only axis aligned right now)
 		# TBD: trace_cap is only accurate for RecSec, others make rectangular cap!
@@ -124,77 +108,11 @@ class Via:
 		self.zspan = [0, self.params['sub_H']] if zspan is None else zspan
 		zspan = self.zspan
 		
-		# Drawing parameters
+		# Draw
 		R = self.params['via_R']
 		start = Pt(pt.x,pt.y,zspan[0])
 		end = Pt(pt.x,pt.y,zspan[1])
-
-		# Draw the cylinder (using loft)
-		sketch = circuit._sketch
-		cir1 = adsk.core.ObjectCollection.create()
-		cir1.add(sketch.sketchCurves.sketchCircles.addByCenterRadius(
-				start.acadPoint3D, R*circuit.design.units))
-		cir2 = adsk.core.ObjectCollection.create()
-		cir2.add(sketch.sketchCurves.sketchCircles.addByCenterRadius(
-				end.acadPoint3D, R*circuit.design.units))
-		loft_inp = circuit._comp.features.loftFeatures.createInput(
-			adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
-		loft_inp.loftSections.add(circuit._comp.features.createPath(cir1))
-		loft_inp.loftSections.add(circuit._comp.features.createPath(cir2))
-		loft_inp.isSolid = True
-		circuit._comp.features.loftFeatures.add(loft_inp)
-
-		# Set the pin
-		self.C = pt
-
-class Port:
-	def __init__(self,circuit,pt,zspan=None,**kwargs):
-		'''Constructor for a port (a via with a barb).'''
-		self.circuit = circuit
-		self.pt = Pt(*pt) if isinstance(pt,tuple) else pt
-		pt = self.pt
-		self.params = circuit.params.copy()
-		for key in kwargs: # Overwrite params with kw params
-			if key in self.params.keys():
-				self.params[key] = kwargs[key]
-		
-		# Drawing parameters
-		H = self.params['sub_H'] # Top of the chip
-		R = self.params['via_R'] # Inner radius of barb
-		R0 = 900 # Tapered outer radius of barb
-		R1 = 1100 # Flared outer radius of barb
-		R2 = 2250 # Space for outer radius of tubing
-		taper = 1000 # How long is the taper
-
-		# Create pointlist for the sketch (0,0 is top along centerline)
-		pr = [R0, R1, R0, R0, (R0+R2)/2, R2, R2]
-		pz = [0, -taper, -taper, -taper*2, -taper*2-(R2-R0)/2,-taper*2,0]
-		# Flip z if zspan is negative
-		if zspan is not None and (zspan[0]+zspan[1]) <0:
-			pz = [-z for z in pz]
-			H = -H
-		pts = [pt+Pt(pr[i],0,H+pz[i]) for i in range(len(pr))]
-		# Draw the sketch of the removed section
-		collection = adsk.core.ObjectCollection.create()
-		for i in range(len(pts)):
-			collection.add(circuit._sketch.sketchCurves.sketchLines
-				.addByTwoPoints(pts[i-1].acadPoint3D,pts[i].acadPoint3D))
-		path = circuit._comp.features.createPath(collection)
-
-		# Create the axis to revolve around
-		ax = [pt,pt+Pt(0,0,H)] # Axis to revolve around
-		axis = circuit._sketch.sketchCurves.sketchLines.addByTwoPoints(
-			ax[0].acadPoint3D,ax[1].acadPoint3D)
-		# Revolve
-		rev_inp = circuit._comp.features.revolveFeatures.createInput(
-			path, axis,
-			adsk.fusion.FeatureOperations.NewComponentFeatureOperation)
-		rev_inp.setAngleExtent(False,
-			adsk.core.ValueInput.createByReal(2*math.pi))
-		circuit._comp.features.revolveFeatures.add(rev_inp)
-
-		# Add the lumen as a via
-		circuit.V(pt,zspan=zspan,**kwargs)
+		circuit.T([start,end],secs=TubeSec(R=R),trace_cap=None)
 
 		# Set the pin
 		self.C = pt
@@ -332,32 +250,33 @@ class Resistor:
 		self.L = points[0]
 		self.R = points[-1]
 		self.C = self.L%self.R
-class Text:
-	def __init__(self,circuit,pt,text,zspan=None,size=300,**kwargs):
-		'''Constructor for text.'''
-		self.circuit = circuit
-		self.pt = Pt(*pt) if isinstance(pt,tuple) else pt
-		pt = self.pt
-		self.text = text
-		self.size = size
-		self.params = circuit.params.copy()
-		for key in kwargs: # Overwrite params with kw params
-			if key in self.params.keys():
-				self.params[key] = kwargs[key]
-		self.zspan = [0, self.params['sub_H']] if zspan is None else zspan
 
-		endpt = pt + (1e5,1) # Global word wrap at 10cm long
-		texts = circuit._sketch.sketchTexts
-		inp = texts.createInput2(text,size*circuit.design.units) # Size in cm from size in um
-		inp.setAsMultiLine(pt.acadPoint3D,endpt.acadPoint3D,
-			adsk.core.HorizontalAlignments.LeftHorizontalAlignment,
-			adsk.core.VerticalAlignments.TopVerticalAlignment, 0)
-		inp.fontName = 'Lucida Console'
-		inp.textStyle = 5 #BoldUnderline (TBD: Doesnt work)
-		sketch_text = texts.add(inp)
-		if zspan[1] != 0:
-			distup = adsk.core.ValueInput.createByReal(zspan[1]*circuit.design.units)
-			circuit._comp.features.extrudeFeatures.addSimple(sketch_text, distup, adsk.fusion.FeatureOperations.NewBodyFeatureOperation) 
-		if zspan[0] != 0:
-			distdown = adsk.core.ValueInput.createByReal(zspan[0]*circuit.design.units)
-			circuit._comp.features.extrudeFeatures.addSimple(sketch_text, distdown, adsk.fusion.FeatureOperations.NewBodyFeatureOperation) 
+# class Text:
+# 	def __init__(self,circuit,pt,text,zspan=None,size=300,**kwargs):
+# 		'''Constructor for text.'''
+# 		self.circuit = circuit
+# 		self.pt = Pt(*pt) if isinstance(pt,tuple) else pt
+# 		pt = self.pt
+# 		self.text = text
+# 		self.size = size
+# 		self.params = circuit.params.copy()
+# 		for key in kwargs: # Overwrite params with kw params
+# 			if key in self.params.keys():
+# 				self.params[key] = kwargs[key]
+# 		self.zspan = [0, self.params['sub_H']] if zspan is None else zspan
+
+# 		endpt = pt + (1e5,1) # Global word wrap at 10cm long
+# 		texts = circuit._sketch.sketchTexts
+# 		inp = texts.createInput2(text,size*circuit.design.units) # Size in cm from size in um
+# 		inp.setAsMultiLine(pt.acadPoint3D,endpt.acadPoint3D,
+# 			adsk.core.HorizontalAlignments.LeftHorizontalAlignment,
+# 			adsk.core.VerticalAlignments.TopVerticalAlignment, 0)
+# 		inp.fontName = 'Lucida Console'
+# 		inp.textStyle = 5 #BoldUnderline (TBD: Doesnt work)
+# 		sketch_text = texts.add(inp)
+# 		if zspan[1] != 0:
+# 			distup = adsk.core.ValueInput.createByReal(zspan[1]*circuit.design.units)
+# 			circuit._comp.features.extrudeFeatures.addSimple(sketch_text, distup, adsk.fusion.FeatureOperations.NewBodyFeatureOperation) 
+# 		if zspan[0] != 0:
+# 			distdown = adsk.core.ValueInput.createByReal(zspan[0]*circuit.design.units)
+# 			circuit._comp.features.extrudeFeatures.addSimple(sketch_text, distdown, adsk.fusion.FeatureOperations.NewBodyFeatureOperation) 
