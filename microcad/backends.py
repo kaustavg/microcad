@@ -91,8 +91,8 @@ class FusionBackend(CADBackend):
 					seg2, seg2.startSketchPoint.geometry,
 					abs(R)*self.units)
 		if return_endpts:
-			return sketcharc, 
-				self.cad2pt(seg1.endSketchPoint.geometry), 
+			return sketcharc,\
+				self.cad2pt(seg1.endSketchPoint.geometry),\
 				self.cad2pt(seg2.startSketchPoint.geometry)
 		else:
 			return sketcharc
