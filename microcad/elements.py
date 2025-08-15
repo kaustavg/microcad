@@ -49,7 +49,7 @@ class Trace:
 		us = []
 		for i in range(len(pts)-1):
 			d = pts[i+1]-pts[i]
-			us[i] = d/d.m
+			us.append(d/d.m)
 		
 		# Initialize growing lists of segs and hoops
 		segs = [backend.create_seg(comp,pts[0],pts[1])]
