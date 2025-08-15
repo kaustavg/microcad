@@ -35,13 +35,36 @@ class Trace:
 		assert len(pts) == len(secs)
 		assert len(pts) == len(Rs)
 
-		# Two growing lists of segs and hoops
-		# Step from point to point:
-		# - Compute prior normal and next normal from prior seg
-		# - If not colinear: segs.append fillet, then segs.append next seg
-		# - 				also, hoops.append sec at fillet start and end 
-		# - If colinear: just segs.append new seg and hoops.append sec
-		# Loft segs and hoops
+		'''
+		Alternative approach: generate the whole segs w/ pts and normals
+		then sweep or loft pieces as needed separately
+
+		segs = [create_seg(pts[0],pts[1])]
+		draws = [(secs[0],pts[0],us[0])] # Contains the startdraw of segs[i]
+
+		for points range(1,end-1):
+			Compute isColinear
+			Create nextseg
+			if not colinear:
+				create (fillet,fstart,fend) with segs[-1],nextseg
+				append fillet to segs
+				append (secs[i],fstart,us[i-1]) to draws
+			else
+				fend = pt[i]
+			append nextseg to segs
+			append (secs[i],fend,us[i]) to draws
+		append (secs[-1],pts[-1],us[-1]) to draws
+
+		# Now step through the lists and identify areas to sweep or loft
+		startind = 0
+		for i in range(len(segsecs)-1)
+			if segsecs[i] != segsecs[i+1]:
+				sweep segs[startind:i], draw[i]
+				loft segs[i],segs[i+1], draw[i], draw[i+1]
+				startind = i+1
+		sweep segs[startind:],draw(secs[-1],segpts[-1],segnors[-1])
+		# Note if last seg is a loft, above line will have startind at end
+		'''
 
 		backend = circuit.design.backend
 		comp = circuit.component
@@ -51,31 +74,47 @@ class Trace:
 			d = pts[i+1]-pts[i]
 			us.append(d/d.m)
 		
-		# Initialize growing lists of segs and hoops
+		# Initialize growing lists of segs and draw tuples
 		segs = [backend.create_seg(comp,pts[0],pts[1])]
-		hoops = [secs[0].draw(circuit,pts[0],u[0])]
+		draws = [(secs[0],pts[0],us[0])] # Contains the startdraws of segs[i]
 
 		# Step through points
 		for i in range(1,len(pts)-1):
-			isColinear = math.isclose((u[i]-u[i-1]).m,0)
+			isColinear = (us[i]-us[i-1]).m < eps
 			nextseg = backend.create_seg(comp,pts[i],pts[i+1])
 			if not isColinear:
-				fillet,start,end = backend.fillet_2_segs(comp,
+				fillet,fstart,fend = backend.fillet_2_segs(comp,
 					segs[-1],nextseg,Rs[i],return_endpts=True)
 				segs.append(fillet)
+				draws.append((secs[i],fstart,us[i-1]))
 				segs.append(nextseg)
-				hoops.append(secs[i].draw(circuit,start,u[i-1]))
-				hoops.append(secs[i].draw(circuit,end,u[i]))
+				draws.append((secs[i],fend,us[i]))
 			else: # Colinear
 				segs.append(nextseg)
-				hoops.append(secs[i].draw(circuit,pts[i],u[i]))
+				draws.append((secs[i],pts[i],us[i]))
+		# Add final draw
+		draws.append((secs[-1],pts[-1],us[-1]))
 
-		# Add final hoop
-		hoops.append(secs[-1].draw(circuit,pts[-1],u[-1]))
-
-		# Make path and loft
-		path = backend.create_path(comp,segs)
-		loft = backend.create_loft(comp,path,hoops)
+		# Now step through segments and sweep or loft as needed
+		startind = 0
+		for i in range(len(segs)): # Note: len(draws)=1+len(segs)
+			if draws[i][0] != draws[i+1][0]: # Must loft
+				# Sweep segs since last loft (startind) if there are any
+				if startind < i:
+					path = backend.create_path(comp,segs[startind:i])
+					sweep = backend.create_sweep(comp,path,
+						draws[i][0].draw(circuit,draws[i][1],draws[i][2]))
+				# Loft this segment
+				loftpath = backend.create_path(comp,segs[i:i+1]) # TODO: does it need to be a path?
+				loftsecs = [draws[i][0].draw(circuit,draws[i][1],draws[i][2]),
+					draws[i+1][0].draw(circuit,draws[i+1][1],draws[i+1][2])]
+				loft = backend.create_loft(comp,loftpath,loftsecs)
+				startind = i+1
+		# Finally, if we hit the end sweep all that remains
+		if startind < len(segs):
+			path = backend.create_path(comp,segs[startind:])
+			sweep = backend.create_sweep(comp,path,
+				draws[-1][0].draw(circuit,draws[-1][1],draws[-1][2]))
 
 		# Draw endcaps (TBD: 'square' is only axis aligned right now)
 		# TBD: trace_cap is only accurate for RecSec, others make rectangular cap!
@@ -111,7 +150,7 @@ class Via:
 		# Draw
 		R = self.params['via_R']
 		start = Pt(pt.x,pt.y,zspan[0])
-		end = Pt(pt.x,pt.y,zspan[1])
+		end = Pt(pt.x,pt.y+1000,zspan[1])
 		circuit.T([start,end],secs=TubeSec(R=R),trace_cap=None)
 
 		# Set the pin

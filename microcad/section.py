@@ -11,7 +11,9 @@ class Section:
 	# TBD: Implement a method called "invert" to return a new section with 
 	# inverted height in Z. Currently, we just copy the section and rewrite the 
 	# value for Section.H to -Section.H
-	pass
+	def __eq__(self, other) : 
+	# Equality is used to determine whether to use loft or sweep
+		return self.__dict__ == other.__dict__
 
 class RecSec(Section):
 	def __init__(self,W=250, H=50):

@@ -97,6 +97,7 @@ class FusionBackend(CADBackend):
 
 	def create_path(self,comp,objs):
 		'''Return a path made from list of sketchlines and sketcharcs.'''
+		assert len(objs) > 0
 		collection = FusionBackend.adsk.core.ObjectCollection.create()
 		for obj in objs:
 			if obj.isValid:
@@ -104,10 +105,18 @@ class FusionBackend(CADBackend):
 		path = comp.features.createPath(collection)
 		return path
 
+	def create_sweep(self,comp,path,sec):
+		'''Return a sweep from a path and one section.'''
+		sweep_inp = comp.features.sweepFeatures.createInput(
+			sec,path,FusionBackend.adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
+		raise Exception(comp)
+		sweep = comp.features.sweepFeatures.add(sweep_inp)
+		return sweep
+
 	def create_loft(self,comp,path,secs):
 		'''Return a loft from a path and multiple sections.'''
-		# Maybe you don't need to create a new object collection here?
-		loft_inp = self.comp.features.loftFeatures.createInput(
+		assert len(secs) > 0
+		loft_inp = comp.features.loftFeatures.createInput(
 			FusionBackend.adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
 		# Add sections
 		for sec in secs:
@@ -115,5 +124,8 @@ class FusionBackend(CADBackend):
 		# Add center line
 		loft_inp.centerLineOrRails.addCenterLine(path)
 		loft_inp.isSolid = True
+		# loft_inp.isTangentEdgesMerged = False
+		# loft_inp.startLoftEdgeAlignment = FusionBackend.adsk.fusion.LoftEdgeAlignments.AlignToSurfaceLoftEdgeAlignment;
+		# loft_inp.endLoftEdgeAlignment = FusionBackend.adsk.fusion.LoftEdgeAlignments.AlignToSurfaceLoftEdgeAlignment;
 		loft = comp.features.loftFeatures.add(loft_inp)
 		return loft
