@@ -84,6 +84,7 @@ class FusionBackend(CADBackend):
 	def fillet_2_segs(self,comp,seg1,seg2,R,return_endpts=False):
 		'''Create a fillet between two sketchlines (modifying them) and return the sketcharc. Optionally return endpts of arc.'''
 		sketch = comp.sketches.item(0) # Get the sketch of the component
+		# If a seg is too short, filleting may delete it. In that case, store the other side of the seg and return that.
 		sketcharc = sketch.sketchCurves.sketchArcs.addFillet(
 					seg1, seg1.endSketchPoint.geometry,
 					seg2, seg2.startSketchPoint.geometry,

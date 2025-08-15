@@ -34,13 +34,11 @@ class Trace:
 		# Check for length mismatches
 		assert len(pts) == len(secs)
 		assert len(pts) == len(Rs)
-
 		'''
-		Alternative approach: generate the whole segs w/ pts and normals
-		then sweep or loft pieces as needed separately
+		Generate the whole segs w/ pts and normals, then sweep or loft pieces
 
-		segs = [create_seg(pts[0],pts[1])]
-		draws = [(secs[0],pts[0],us[0])] # Contains the startdraw of segs[i]
+		segs: sketchlines or sketcharcs
+		draws = tuples of sec, pt, normal (startdraw of segs[i])
 
 		for points range(1,end-1):
 			Compute isColinear
@@ -65,7 +63,6 @@ class Trace:
 		sweep segs[startind:],draw(secs[-1],segpts[-1],segnors[-1])
 		# Note if last seg is a loft, above line will have startind at end
 		'''
-
 		backend = circuit.design.backend
 		comp = circuit.component
 		# Compute unit normals

@@ -53,6 +53,8 @@ class Design:
 	def create_circuit(self,*args,**kwargs):
 		'''Return a circuit to the design.'''
 		cir = Circuit(self,*args,**kwargs)
+		# Optional: Clean the latest circuit before making new one
+		if len(self.circuits)>0: self.circuits[-1].clean_sketch()
 		self.circuits.append(cir)
 		return cir
 
@@ -117,6 +119,7 @@ class Circuit:
 
 	def text(self,*args,**kwargs):
 		'''Add text to the circuit.'''
+		return
 		txt = Text(self,*args,**kwargs)
 		self.elements.append(txt)
 		# self.clean_sketch()
