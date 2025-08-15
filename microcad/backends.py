@@ -31,26 +31,25 @@ class CADBackend:
 	pass
 
 class FusionBackend(CADBackend):
+	# Import Fusion API modules
+	import adsk.core, adsk.fusion, traceback
+	
 	def __init__(self):
 		'''Fusion 360 backend constructor'''
-		
-		# Import Fusion API modules
-		import adsk.core, adsk.fusion, traceback
-
 		self.name = 'fusion'
 		self.units = 1e-4 # Number of CAD units (cm for fusion) in one Point unit (um)
 
-		self._app = adsk.core.Application.get()
+		self._app = FusionBackend.adsk.core.Application.get()
 		self._ui = self._app.userInterface
 		self._product = self._app.activeProduct
-		self._design = adsk.fusion.Design.cast(self._product)
+		self._design = FusionBackend.adsk.fusion.Design.cast(self._product)
 		# Do not capture design history for speed
-		self._design.designType = adsk.fusion.DesignTypes.DirectDesignType
+		self._design.designType = FusionBackend.adsk.fusion.DesignTypes.DirectDesignType
 		self._root_comp = self._design.rootComponent
 
 	def pt2cad(self,pt):
 		'''Return the appropriate CAD point for the given Point object.'''
-		return adsk.core.Point3D.create(
+		return FusionBackend.adsk.core.Point3D.create(
 			float(pt.x*self.units),float(pt.y*self.units),float(pt.z*self.units))
 	def cad2pt(self,cadpt):
 		'''Return a Point object for a CAD point.'''
@@ -58,8 +57,7 @@ class FusionBackend(CADBackend):
 
 	def create_component(self):
 		'''Return a new Fusion component including sketchplane (for a new circuit).'''
-		# Call this when creating a new circuit object: self.component = self.design.backend.create_component()
-		occ = self._root_comp.occurrences.addNewComponent(adsk.core.Matrix3D.create())
+		occ = self._root_comp.occurrences.addNewComponent(FusionBackend.adsk.core.Matrix3D.create())
 		comp = occ.component
 		self.clean_component(comp)
 		return comp
@@ -99,7 +97,7 @@ class FusionBackend(CADBackend):
 
 	def create_path(self,comp,objs):
 		'''Return a path made from list of sketchlines and sketcharcs.'''
-		collection = adsk.core.ObjectCollection.create()
+		collection = FusionBackend.adsk.core.ObjectCollection.create()
 		for obj in objs:
 			if obj.isValid:
 				collection.add(obj)
@@ -110,7 +108,7 @@ class FusionBackend(CADBackend):
 		'''Return a loft from a path and multiple sections.'''
 		# Maybe you don't need to create a new object collection here?
 		loft_inp = self.comp.features.loftFeatures.createInput(
-			adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
+			FusionBackend.adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
 		# Add sections
 		for sec in secs:
 			loft_inp.loftSections.add(sec)
