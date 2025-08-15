@@ -1,5 +1,5 @@
 #Author-Kaustav Gopinathan
-#Description-This script runs python code that generates a microfluidic device using the Microfusion library. Modify this script to select the device to generate.
+#Description-This script runs python code that generates a microfluidic device using the MicroCAD library. Modify this script to select the device to generate.
 
 import adsk.core, adsk.fusion, adsk.cam, traceback
 import sys, importlib
