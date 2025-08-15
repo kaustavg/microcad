@@ -27,12 +27,6 @@ class Pt:
 		self.units = 1e-4 # Number of cm in 1 unit
 		units = self.units 
 
-		# # If first argument is an acadPoint3D, then convert it
-		# if isinstance(x,adsk.core.Point3D):
-		# 	z = x.z/units
-		# 	y = x.y/units
-		# 	x = x.x/units
-
 		self.x = x
 		self.y = y
 		self.z = z

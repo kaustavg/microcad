@@ -51,8 +51,8 @@ class Design:
 			raise NotImplementedError
 
 
-	def add_circuit(self,*args,**kwargs):
-		'''Add a circuit to the design.'''
+	def create_circuit(self,*args,**kwargs):
+		'''Return a circuit to the design.'''
 		cir = Circuit(self,*args,**kwargs)
 		self.circuits.append(cir)
 		return cir
