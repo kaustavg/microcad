@@ -14,26 +14,16 @@ All operations work on tuples as well.
 
 '''
 
-import adsk.core, adsk.fusion, traceback
 import math
 
 class Pt:
 	def __init__(self,x=0,y=0,z=0):
 		'''Point constructor'''
 
-		# Note that Fusion only works in cm
-		# If units=.1 then 1mm in fusion -> 1um
-		# If units=1e-4 then 1um in fusion -> 1um
-		self.units = 1e-4 # Number of cm in 1 unit
-		units = self.units 
-
 		self.x = x
 		self.y = y
 		self.z = z
 		self.m = (x*x + y*y + z*z)**.5 # Length to origin
-
-		self.acadPoint3D = adsk.core.Point3D.create(
-			float(x*units),float(y*units),float(z*units))
 
 	def __str__(self):
 		return str((self.x,self.y,self.z))

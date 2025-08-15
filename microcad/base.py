@@ -2,11 +2,10 @@
 Base Design and Circuit classes.
 '''
 
-import adsk.core, adsk.fusion, traceback
-
 from .point import *
 from .section import *
 from .elements import *
+from .backend import *
 
 def printm(message):
 	app = adsk.core.Application.get()
