@@ -9,14 +9,13 @@ def main():
 	# Circuit Components
 	tran1 = cir.M((0,0,0),anchor='S') # Transistor
 	trace1 = cir.T([tran1.D,tran1.D+(0,-500)]) # Short trace to resistor
-	# cir.T([cir.origin,cir.origin+(1e3,1e3),cir.origin+(5e3,5e3),cir.origin+(5e3,2e3),cir.origin+(2e3,0e3),cir.origin+(5e3,-5e3)])
 	res1 = cir.R(trace1.P2,50,anchor='L',rotation=-90) # Resistor of 50 kPa*s/uL
-	# # Ports
+	# Ports
 	sup1 = cir.V(tran1.S+(0,5000)) # Supply Port
 	gnd1 = cir.V(res1.R+(0,-5000)) # Ground Port
 	out1 = cir.V((sup1.C%gnd1.C)+(6000,1000)) # Output Port
 	inp1 = cir.V(tran1.G1+(-6000,0),zspan=[0,-cir.params['sub_H']]) # Input Port
-	# # Traces
+	# Traces
 	cir.T([sup1.C,tran1.S])
 	cir.T([res1.R,gnd1.C])
 	cir.T([tran1.D+(0,-250),tran1.D+(1000,-250),out1.C],trace_R=100)
