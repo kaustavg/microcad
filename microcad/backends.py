@@ -66,7 +66,7 @@ class FusionBackend(CADBackend):
 		'''In-place clean-up of a component for performance.'''
 		# In fusion, can call this after drawing each element
 		# Clears all existing sketches in the component and makes a fresh one
-		for i in comp.sketches.count:
+		for i in range(comp.sketches.count):
 			sketch = comp.sketches.item(i)
 			sketch.deleteMe()
 		sketch = comp.sketches.add(comp.xYConstructionPlane)
