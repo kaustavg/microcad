@@ -146,19 +146,23 @@ class TrapzSec(Section):
 
 class TubeSec(Section):
 	def __init__(self,R=250):
-		'''Constructor for a Tube section.'''
+		'''Constructor for a Tube section (also used in Vias).'''
 		self.R = R
 		self.span = 2*R # Used to avoid loft self-intersections
+		
+		r = abs(self.R*1e-6) # SI radius
+		# Multiply following by mu*L to obtain resistance in SI
+		# This has units of 1/(m^4)
+		self.res_muL = 8/(math.pi*r**4)
 
 	def draw(self,circuit,pc,n):
 		'''Return the path centered around pc normal to n.'''
-		# Here we draw the section normal to x axis, then rotate it.
-		m = 16 # Number of facets to make up the tube
-		R = self.R
 
-		px = [0 for i in range(m)];
-		py = [R*math.cos(2*math.pi*i/m) for i in range(m)]
-		pz = [R*math.sin(2*math.pi*i/m) for i in range(m)]
+		# Draw this by drawing a box normal to x axis, then fillet edges
+		R = self.R
+		px = [0,0,0,0]
+		py = [-R,R,R,-R]
+		pz = [-R,-R,R,R]
 
 		# Rotate the x and y
 		u = n/n.m
@@ -167,11 +171,20 @@ class TubeSec(Section):
 		roty = [rotm[1][0]*px[i]+rotm[1][1]*py[i] for i in range(len(py))]
 		pts = [Pt(rotx[i],roty[i],pz[i]) for i in range(len(px))]
 		pts = [pt+pc for pt in pts] # Offset by center point
+
+		# Special case for vertical vias
+		# Other Sections do not have this ability to travel in Z axis
+		if abs(u.z) > .5:
+			pts = [Pt(pz[i],py[i],0) for i in range(len(px))]
+			pts = [pt+pc for pt in pts] # Offset by center point
+
 		# Draw in backend
 		backend = circuit.design.backend
 		comp = circuit.component
-		segs = []
+		objs = []
 		for i in range(len(pts)):
-			segs.append(backend.create_seg(comp,pts[i-1],pts[i]))
-		path = backend.create_path(comp,segs)
+			seg1 = backend.create_seg(comp,pts[i-1],pts[i])
+			seg2 = backend.create_seg(comp,pts[i],pts[(i+1)%4])
+			objs.append(backend.fillet_2_segs(comp,seg1,seg2,R))
+		path = backend.create_path(comp,objs)
 		return path

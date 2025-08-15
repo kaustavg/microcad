@@ -109,7 +109,7 @@ class FusionBackend(CADBackend):
 		'''Return a sweep from a path and one section.'''
 		sweep_inp = comp.features.sweepFeatures.createInput(
 			sec,path,FusionBackend.adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
-		raise Exception(comp)
+		# raise Exception(path.count)
 		sweep = comp.features.sweepFeatures.add(sweep_inp)
 		return sweep
 

@@ -150,7 +150,7 @@ class Via:
 		# Draw
 		R = self.params['via_R']
 		start = Pt(pt.x,pt.y,zspan[0])
-		end = Pt(pt.x,pt.y+1000,zspan[1])
+		end = Pt(pt.x,pt.y,zspan[1])
 		circuit.T([start,end],secs=TubeSec(R=R),trace_cap=None)
 
 		# Set the pin
