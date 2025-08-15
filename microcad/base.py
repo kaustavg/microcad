@@ -5,7 +5,7 @@ Base Design and Circuit classes.
 from .point import *
 from .section import *
 from .elements import *
-from .backend import *
+from .backends import *
 
 def printm(message):
 	app = adsk.core.Application.get()
