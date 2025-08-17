@@ -130,3 +130,88 @@ class FusionBackend(CADBackend):
 		# loft_inp.endLoftEdgeAlignment = FusionBackend.adsk.fusion.LoftEdgeAlignments.AlignToSurfaceLoftEdgeAlignment;
 		loft = comp.features.loftFeatures.add(loft_inp)
 		return loft
+class FreecadBackend(CADBackend):
+    # Import FreeCAD API modules
+    import FreeCAD as App, FreeCADGui as Gui, Part, Draft
+
+    def __init__(self):
+        '''FreeCAD backend constructor'''
+        self.name = 'freecad'
+        # FreeCAD uses millimetres; Point uses microns
+        self.units = 1e-3
+
+        self._doc = FreecadBackend.App.ActiveDocument
+        if self._doc is None:
+            self._doc = FreecadBackend.App.newDocument()
+        self._root_comp = self._doc.addObject('Part::Feature', 'Component')
+        self.clean_component(self._root_comp)
+
+    def pt2cad(self, pt):
+        '''Return the appropriate FreeCAD Vector for the given Point object.'''
+        return FreecadBackend.App.Vector(
+            float(pt.x * self.units),
+            float(pt.y * self.units),
+            float(pt.z * self.units))
+
+    def cad2pt(self, vec):
+        '''Return a Point object for a FreeCAD vector.'''
+        return Pt(vec.x / self.units, vec.y / self.units, vec.z / self.units)
+
+    def create_component(self):
+        '''Return a new FreeCAD component (Part Feature).'''
+        comp = self._doc.addObject('Part::Feature', 'Component')
+        self.clean_component(comp)
+        return comp
+
+    def clean_component(self, comp):
+        '''Remove existing sketches and create a new sketch.'''
+        if hasattr(comp, 'Group'):
+            for obj in list(comp.Group):
+                self._doc.removeObject(obj.Name)
+        sketch = self._doc.addObject('Sketcher::SketchObject', 'Sketch')
+        comp.addObject(sketch)
+        self._doc.recompute()
+
+    ## DRAWING METHODS
+    def create_seg(self, comp, pt1, pt2):
+        '''Return a Draft line between two points.'''
+        return FreecadBackend.Draft.makeLine(self.pt2cad(pt1), self.pt2cad(pt2))
+
+    def fillet_2_segs(self, comp, seg1, seg2, R, return_endpts=False):
+        '''Create a fillet between two Draft lines and return the resulting arc.'''
+        fillet = FreecadBackend.Draft.fillet([seg1, seg2], R * self.units)
+        if return_endpts:
+            return (fillet,
+                    self.cad2pt(seg1.Shape.EndPoint),
+                    self.cad2pt(seg2.Shape.StartPoint))
+        else:
+            return fillet
+
+    def create_path(self, comp, objs):
+        '''Return a Part.Wire path from a list of objects.'''
+        edges = []
+        for obj in objs:
+            shape = obj.Shape if hasattr(obj, 'Shape') else obj
+            edges.extend(shape.Edges)
+        path = FreecadBackend.Part.Wire(edges)
+        return path
+
+    def create_sweep(self, comp, path, sec):
+        '''Return a sweep from a path and one section.'''
+        sweep = comp.newObject('Part::Sweep', 'Sweep')
+        sweep.Sections = [sec]
+        sweep.Spine = path
+        sweep.Solid = True
+        self._doc.recompute()
+        return sweep
+
+    def create_loft(self, comp, path, secs):
+        '''Return a loft from a path and multiple sections.'''
+        loft = comp.newObject('Part::Loft', 'Loft')
+        loft.Sections = secs
+        loft.Solid = True
+        loft.Ruled = False
+        loft.Closed = False
+        loft.addObject(path)
+        self._doc.recompute()
+        return loft

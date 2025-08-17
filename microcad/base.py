@@ -44,8 +44,10 @@ class Design:
 		# TODO: Clear all elements on every rerun
 
 		# Set up the appropriate backend
-		if backend is 'fusion':
+		if backend == 'fusion':
 			self.backend = FusionBackend()
+		elif backend == 'freecad':
+			self.backend = FreecadBackend()
 		else:
 			raise NotImplementedError
 
