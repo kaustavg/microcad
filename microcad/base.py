@@ -54,7 +54,7 @@ class Design:
 		'''Return a circuit to the design.'''
 		cir = Circuit(self,*args,**kwargs)
 		# Optional: Clean the latest circuit before making new one
-		# if len(self.circuits)>0: self.circuits[-1].clean_sketch()
+		if len(self.circuits)>0: self.circuits[-1].clean_sketch()
 		self.circuits.append(cir)
 		return cir
 
