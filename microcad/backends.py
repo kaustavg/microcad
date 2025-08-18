@@ -134,8 +134,7 @@ class FusionBackend(CADBackend):
 class FreecadBackend(CADBackend):
 	# Import FreeCAD API modules
 	import FreeCAD as App
-	import FreeCADGui as Gui
-	import Part, Draft
+	import Part
 
 	def __init__(self):
 		'''FreeCAD backend constructor'''
@@ -145,8 +144,8 @@ class FreecadBackend(CADBackend):
 		self._doc = FreecadBackend.App.ActiveDocument
 		if self._doc is None:
 			self._doc = FreecadBackend.App.newDocument()
-		self._root_comp = self._doc.addObject('Part::Feature', 'Component')
-		self.clean_component(self._root_comp)
+		# self._root_comp = self._doc.addObject('Part::Feature', 'Component')
+		# self.clean_component(self._root_comp)
 
 	def pt2cad(self, pt):
 		'''Return the Freecad vector for the given Point object.'''
@@ -162,26 +161,22 @@ class FreecadBackend(CADBackend):
 	def create_component(self):
 		'''Return a new FreeCAD component (Part Feature).'''
 		comp = self._doc.addObject('Part::Feature', 'Component')
-		self.clean_component(comp)
+		# self.clean_component(comp)
 		return comp
 
 	def clean_component(self, comp):
 		'''Remove existing sketches and create a new sketch.'''
-		if hasattr(comp, 'Group'):
-			for obj in list(comp.Group):
-				self._doc.removeObject(obj.Name)
-		sketch = self._doc.addObject('Sketcher::SketchObject', 'Sketch')
-		comp.addObject(sketch)
-		self._doc.recompute()
+		pass
 
 	## DRAWING METHODS
 	def create_seg(self, comp, pt1, pt2):
-		'''Return a Draft line between two points.'''
-		return FreecadBackend.Draft.makeLine(self.pt2cad(pt1), self.pt2cad(pt2))
+		'''Return a segment between two points.'''
+		return FreecadBackend.Part.makeLine(
+			self.pt2cad(pt1),self.pt2cad(pt2))
 
 	def fillet_2_segs(self, comp, seg1, seg2, R, return_endpts=False):
-		'''Create a fillet between two Draft lines and return the resulting arc.'''
-		fillet = FreecadBackend.Draft.fillet([seg1, seg2], R * self.units)
+		'''Create a fillet between two lines (modifying them) and return the arc. Optionally return endpts of arc.'''
+		fillet = FreecadBackend.Part.fillet([seg1, seg2], R * self.units)
 		if return_endpts:
 			return (fillet,
 					self.cad2pt(seg1.Shape.EndPoint),
