@@ -4,7 +4,7 @@ sys.path.append(r'C:\Users\Kaustav\Dropbox\Projects\Starling\microcad')
 import microcad as mc
 
 def main():
-	design = mc.Design(backend='fusion')
+	design = mc.Design(backend='freecad')
 	cir = design.create_circuit()
 	# Circuit Components
 	tran1 = cir.M((0,0,0),anchor='S') # Transistor

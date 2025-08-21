@@ -135,6 +135,8 @@ class FreecadBackend(CADBackend):
 	# Import FreeCAD API modules
 	import FreeCAD as App
 	import Part
+	import DraftGeomUtils
+
 
 	def __init__(self):
 		'''FreeCAD backend constructor'''
@@ -143,7 +145,7 @@ class FreecadBackend(CADBackend):
 
 		self._doc = FreecadBackend.App.ActiveDocument
 		if self._doc is None:
-			self._doc = FreecadBackend.App.newDocument()
+			self._doc = FreecadBackend.App.newDocument("Microcad Script")
 		# self._root_comp = self._doc.addObject('Part::Feature', 'Component')
 		# self.clean_component(self._root_comp)
 
@@ -171,44 +173,49 @@ class FreecadBackend(CADBackend):
 	## DRAWING METHODS
 	def create_seg(self, comp, pt1, pt2):
 		'''Return a segment between two points.'''
+		# This returns a FreeCAD Edge object
 		return FreecadBackend.Part.makeLine(
 			self.pt2cad(pt1),self.pt2cad(pt2))
 
 	def fillet_2_segs(self, comp, seg1, seg2, R, return_endpts=False):
 		'''Create a fillet between two lines (modifying them) and return the arc. Optionally return endpts of arc.'''
-		fillet = FreecadBackend.Part.fillet([seg1, seg2], R * self.units)
+		# DraftGeomUtils.fillet is a low-level function that takes two edges
+		# and returns [newedge, fillet, newedge]
+		seg1,fillet,seg2 = FreecadBackend.DraftGeomUtils.fillet(
+			[seg1,seg2],abs(R)*self.units,chamfer=False)
 		if return_endpts:
 			return (fillet,
-					self.cad2pt(seg1.Shape.EndPoint),
-					self.cad2pt(seg2.Shape.StartPoint))
+					self.cad2pt(seg1.lastVertex().Point),
+					self.cad2pt(seg2.firstVertex().Point))
 		else:
 			return fillet
 
 	def create_path(self, comp, objs):
 		'''Return a Part.Wire path from a list of objects.'''
-		edges = []
-		for obj in objs:
-			shape = obj.Shape if hasattr(obj, 'Shape') else obj
-			edges.extend(shape.Edges)
-		path = FreecadBackend.Part.Wire(edges)
+		path = FreecadBackend.Part.Wire(objs)
 		return path
 
 	def create_sweep(self, comp, path, sec):
 		'''Return a sweep from a path and one section.'''
-		sweep = comp.newObject('Part::Sweep', 'Sweep')
-		sweep.Sections = [sec]
-		sweep.Spine = path
-		sweep.Solid = True
-		self._doc.recompute()
+		# If path is a FreeCAD wire, use built-in method
+		sweep = path.makePipe(FreecadBackend.Part.Face(sec))
 		return sweep
 
 	def create_loft(self, comp, path, secs):
 		'''Return a loft from a path and multiple sections.'''
-		loft = comp.newObject('Part::Loft', 'Loft')
-		loft.Sections = secs
-		loft.Solid = True
-		loft.Ruled = False
-		loft.Closed = False
-		loft.addObject(path)
-		self._doc.recompute()
+		assert len(secs) > 0
+		# Use Low-level API https://dev.opencascade.org/doc/occt-7.5.0/refman/html/class_b_rep_offset_a_p_i___make_pipe_shell.html
+		loft_inp = FreecadBackend.Part.BRepOffsetAPI.MakePipeShell(path)
+		loft_inp.setTransitionMode(0)
+		loft_inp.setFrenetMode(True)
+		loft_inp.add(secs[0], True, True)
+		loft_inp.add(secs[1], True, True)
+		loft_inp.build()
+		loft_inp.makeSolid()
+		loft = loft_inp.shape()
+
+		FreecadBackend.Part.show(loft) # Below lines may be faster since no need to recompute
 		return loft
+		# myObj = FreeCAD.ActiveDocument.addObject("Part::Feature","Loft")
+		# myObj.Shape = sweep
+		# return myObj
