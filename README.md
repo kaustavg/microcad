@@ -1,5 +1,5 @@
 # Microcad
-Programmatically draw 3D microfluidic chips in Fusion 360.
+Programmatically draw 3D microfluidic chips in Fusion 360 or FreeCAD.
 
 ## Overview
 This package converts python scripts into 3D microfluidic circuit designs in Fusion 360. 
