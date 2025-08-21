@@ -185,6 +185,7 @@ class TubeSec(Section):
 		for i in range(len(pts)):
 			seg1 = backend.create_seg(comp,pts[i-1],pts[i])
 			seg2 = backend.create_seg(comp,pts[i],pts[(i+1)%4])
-			objs.append(backend.fillet_2_segs(comp,seg1,seg2,R))
+			_,fillet,_ = backend.fillet_2_segs(comp,seg1,seg2,R)
+			objs.append(fillet)
 		path = backend.create_path(comp,objs)
 		return path

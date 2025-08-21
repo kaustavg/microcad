@@ -26,7 +26,7 @@ class Pt:
 		self.m = (x*x + y*y + z*z)**.5 # Length to origin
 
 	def __str__(self):
-		return str((self.x,self.y,self.z))
+		return str((round(self.x,2),round(self.y,2),round(self.z,2)))
 
 	def rotate(self,degrees,center=(0,0,0)):
 		'''Returns a rotated point in 2D around a center.'''

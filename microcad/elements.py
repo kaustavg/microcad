@@ -80,8 +80,10 @@ class Trace:
 			isColinear = (us[i]-us[i-1]).m < eps
 			nextseg = backend.create_seg(comp,pts[i],pts[i+1])
 			if not isColinear:
-				fillet,fstart,fend = backend.fillet_2_segs(comp,
-					segs[-1],nextseg,Rs[i],return_endpts=True)
+				currseg = segs[-1]
+				currseg,fillet,nextseg,fstart,fend = backend.fillet_2_segs(
+					comp,currseg,nextseg,Rs[i],return_endpts=True)
+				segs[-1] = currseg
 				segs.append(fillet)
 				draws.append((secs[i],fstart,us[i-1]))
 				segs.append(nextseg)
@@ -115,12 +117,12 @@ class Trace:
 
 		# Draw endcaps (TBD: 'square' is only axis aligned right now)
 		# TBD: trace_cap is only accurate for RecSec, others make rectangular cap!
-		if self.params['trace_cap'] is 'round':
+		if self.params['trace_cap'] == 'round':
 			circuit.V(pts[0],zspan=[pts[0].z,pts[0].z+secs[0].H],
 				via_R=secs[0].span/2)
 			circuit.V(pts[-1],zspan=[pts[-1].z,pts[-1].z+secs[-1].H],
 				via_R=secs[-1].span/2)
-		elif self.params['trace_cap'] is 'square':
+		elif self.params['trace_cap'] == 'square':
 			circuit.T([pts[0]-(secs[0].span/2,0),pts[0]+(secs[0].span/2,0)],
 				secs=secs[0],trace_cap='none')
 			circuit.T([pts[-1]-(secs[-1].span/2,0),pts[-1]+(secs[-1].span/2,0)],
@@ -266,7 +268,7 @@ class Resistor:
 		secs.append(T_sec)
 
 		# Flip if justified right
-		if justify is 'right':
+		if justify == 'right':
 			points = [Pt(point.x,-point.y,point.z) for point in points]
 
 		# Determine anchor
