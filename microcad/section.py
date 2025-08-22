@@ -57,7 +57,7 @@ class CurveSec(Section):
 		'''Constructor for a Curvilinear section.'''
 		self.W = W
 		self.H = H
-		self.R = abs(H) if R is None else R
+		self.R = abs(H) if R is None else abs(R)
 		self.span = W # Used to avoid loft self-intersections
 		h = abs(H*1e-6) # SI height
 		w = abs(W*1e-6) # SI width
@@ -80,7 +80,7 @@ class CurveSec(Section):
 		# Here we draw the section normal to x axis, then rotate it.
 		W = self.W
 		H = self.H
-		R = self.R # Must undersize slightly
+		R = self.R
 		px = [0,0,0,0]
 		py = [-W/2,W/2,W/2,-W/2]
 		pz = [0,0,H,H]
@@ -96,14 +96,31 @@ class CurveSec(Section):
 		backend = circuit.design.backend
 		comp = circuit.component
 		segs = []
-		for i in range(len(pts)):
-			segs.append(backend.create_seg(comp,pts[i-1],pts[i]))
-		# Add fillets at bottom
-		segs[2], arc1, segs[3] = backend.fillet_2_segs(comp,segs[2],segs[3],R)
-		segs[-1], arc2, segs[0] = backend.fillet_2_segs(comp,segs[-1],segs[0],R)
-		objs = segs[:3]+[arc1]+[segs[3]]+[arc2] # Add in order
-		path = backend.create_path(comp,objs)
-		return path
+		eps = 1e-3
+
+		# Add fillets at top
+		if abs(R) - abs(H) < 1: # Fully curved top
+			# Create oversized side segments (to allow filleting)
+			segs = [backend.create_seg(comp,pts[3],pts[0]-(0,0,H)),
+				backend.create_seg(comp,pts[0],pts[1]),
+				backend.create_seg(comp,pts[1]-(0,0,H),pts[2]),
+				backend.create_seg(comp,pts[2],pts[3])]
+			# Fillet
+			_, arc1, segs[3] = backend.fillet_2_segs(comp,segs[2],segs[3],R)
+			segs[3], arc2, _ = backend.fillet_2_segs(comp,segs[3],segs[0],R)
+			objs = [segs[1], arc1, segs[3], arc2] # Add in order
+			path = backend.create_path(comp,objs)
+			return path
+		else: # Partially filleted top
+			# Create segments
+			for i in range(len(pts)):
+				segs.append(backend.create_seg(comp,pts[i-1],pts[i]))
+			# Fillet
+			segs[2], arc1, segs[3] = backend.fillet_2_segs(comp,segs[2],segs[3],R)
+			segs[-1], arc2, segs[0] = backend.fillet_2_segs(comp,segs[-1],segs[0],R)
+			objs = segs[:3]+[arc1]+[segs[3]]+[arc2] # Add in order
+			path = backend.create_path(comp,objs)
+			return path
 
 class TrapzSec(Section):
 	def __init__(self,W=250, H=50, Wt=None, Ht=None):

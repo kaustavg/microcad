@@ -1,10 +1,7 @@
-import sys
-sys.path.append(r'C:\Users\Kaustav\Dropbox\Projects\Starling\microcad')
-
 import microcad as mc
 
 def main():
-	design = mc.Design(backend='freecad')
+	design = mc.Design(backend='fusion')
 	cir = design.create_circuit()
 	# cir.T([(0,0,0),(1e3,1e3,0e3),(1e3,2e3,0e3),(.5e3,1e3,0e3),(0e3,1e3,0e3)],trace_R=100)
 	# Circuit Components
@@ -19,5 +16,5 @@ def main():
 	# Traces
 	cir.T([sup1.C,tran1.S])
 	cir.T([res1.R,gnd1.C])
-	cir.T([tran1.D+(0,-250),tran1.D+(1000,-250),out1.C],trace_R=500)
+	cir.T([tran1.D+(0,-250),tran1.D+(1000,-250),out1.C],trace_R=1000)
 	cir.T([tran1.G1,inp1.C],secs=mc.CurveSec(W=250,H=-30))

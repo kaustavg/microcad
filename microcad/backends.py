@@ -199,6 +199,7 @@ class FreecadBackend(CADBackend):
 		else:
 			print('Warning: Fillet failed at')
 			print(self.cad2pt(segfillseg[0].lastVertex().Point))
+			print('Continuing without fillet.')
 			fillet = None
 		if return_endpts:
 			return seg1,fillet,seg2,\
@@ -213,7 +214,7 @@ class FreecadBackend(CADBackend):
 		try:
 			path = self.Freecad.Part.Wire(segs)
 		except Exception as Err:
-			print('Cannot create path')
+			print('Error: Cannot create path')
 			print(segs)
 			for seg in segs:
 				print((seg.firstVertex().Point,seg.lastVertex().Point))
@@ -224,7 +225,6 @@ class FreecadBackend(CADBackend):
 	def create_sweep(self, comp, path, sec):
 		'''Return a sweep from a path and one section.'''
 		# If path is a FreeCAD wire, use built-in method
-		print('Creating sweep')
 		face = self.Freecad.Part.Face(sec)		
 		try:
 			sweep = path.makePipe(face)
