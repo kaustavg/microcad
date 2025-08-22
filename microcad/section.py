@@ -99,8 +99,8 @@ class CurveSec(Section):
 		for i in range(len(pts)):
 			segs.append(backend.create_seg(comp,pts[i-1],pts[i]))
 		# Add fillets at bottom
-		arc1 = backend.fillet_2_segs(comp,segs[2],segs[3],R)
-		arc2 = backend.fillet_2_segs(comp,segs[-1],segs[0],R)
+		_, arc1, _ = backend.fillet_2_segs(comp,segs[2],segs[3],R)
+		_, arc2, _ = backend.fillet_2_segs(comp,segs[-1],segs[0],R)
 		objs = segs[:3]+[arc1]+[segs[3]]+[arc2] # Add in order
 		path = backend.create_path(comp,objs)
 		return path

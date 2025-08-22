@@ -105,15 +105,15 @@ class Trace:
 						draws[i][0].draw(circuit,draws[i][1],draws[i][2]))
 				# Loft this segment
 				loftpath = backend.create_path(comp,segs[i:i+1]) # TODO: does it need to be a path?
-				loftsecs = [draws[i][0].draw(circuit,draws[i][1],draws[i][2]),
+				loftdraws = [draws[i][0].draw(circuit,draws[i][1],draws[i][2]),
 					draws[i+1][0].draw(circuit,draws[i+1][1],draws[i+1][2])]
-				loft = backend.create_loft(comp,loftpath,loftsecs)
+				loft = backend.create_loft(comp,loftpath,loftdraws)
 				startind = i+1
 		# Finally, if we hit the end sweep all that remains
 		if startind < len(segs):
 			path = backend.create_path(comp,segs[startind:])
-			sweep = backend.create_sweep(comp,path,
-				draws[-1][0].draw(circuit,draws[-1][1],draws[-1][2]))
+			draw = draws[-1][0].draw(circuit,draws[-1][1],draws[-1][2])
+			sweep = backend.create_sweep(comp,path,draw)
 
 		# Draw endcaps (TBD: 'square' is only axis aligned right now)
 		# TBD: trace_cap is only accurate for RecSec, others make rectangular cap!

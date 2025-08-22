@@ -95,11 +95,11 @@ class FusionBackend(CADBackend):
 					seg2, seg2.startSketchPoint.geometry,
 					abs(R)*self.units)
 		if return_endpts:
-			return (seg1,sketcharc,seg2,
-				self.cad2pt(seg1.endSketchPoint.geometry),
-				self.cad2pt(seg2.startSketchPoint.geometry))
+			return seg1,sketcharc,seg2,\
+				self.cad2pt(seg1.endSketchPoint.geometry),\
+				self.cad2pt(seg2.startSketchPoint.geometry)
 		else:
-			return sketcharc
+			return seg1,sketcharc,seg2
 
 	def create_path(self,comp,objs):
 		'''Return a path made from list of sketchlines and sketcharcs.'''
@@ -140,7 +140,7 @@ class FreecadBackend(CADBackend):
 	def __init__(self):
 		'''FreeCAD backend constructor'''
 		self.name = 'freecad'
-		self.units = 1e-1 # Number of CAD units (mm for freecad) in one Point unit (um)
+		self.units = 1e-3 # Number of CAD units (mm for freecad) in one Point unit (um)
 
 		# Import Freecad API modules
 		import FreeCAD as AppModule
@@ -201,9 +201,9 @@ class FreecadBackend(CADBackend):
 			print(self.cad2pt(segfillseg[0].lastVertex().Point))
 			return None
 		if return_endpts:
-			return (seg1,fillet,seg2,
-					self.cad2pt(fillet.firstVertex().Point),
-					self.cad2pt(fillet.lastVertex().Point))
+			return seg1,fillet,seg2,\
+					self.cad2pt(fillet.firstVertex().Point),\
+					self.cad2pt(fillet.lastVertex().Point)
 		else:
 			return seg1,fillet,seg2
 
@@ -228,7 +228,12 @@ class FreecadBackend(CADBackend):
 		self.Freecad.Part.show(sec)
 		print(path)
 		self.Freecad.Part.show(path)
-		sweep = path.makePipe(self.Freecad.Part.Face(sec))
+		face = self.Freecad.Part.Face(sec)		
+		try:
+			sweep = path.makePipe(face)
+		except:
+			self.Freecad.Part.show(face)
+
 		self.Freecad.Part.show(sweep)
 		return sweep
 
