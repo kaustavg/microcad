@@ -26,7 +26,7 @@ class Trace:
 
 		# Drawing parameters
 		eps = 1e-3
-		minR = 2 # Minimum inner edge radius ##TBD CHANGE THIS IT'S TOO HIGH
+		minR = 2 # Minimum inner edge radius ##TBD FIX THIS IT'S TOO HIGH
 		Rs = self.params['trace_R']
 		if not isinstance(Rs,list): # Expand Rs to fill list
 			Rs = [Rs for i in range(len(pts))]
