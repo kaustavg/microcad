@@ -6,6 +6,7 @@ import microcad as mc
 def main():
 	design = mc.Design(backend='freecad')
 	cir = design.create_circuit()
+	# cir.T([(0,0,0),(1e3,1e3,0e3),(1e3,2e3,0e3),(.5e3,1e3,0e3),(0e3,1e3,0e3)],trace_R=100)
 	# Circuit Components
 	tran1 = cir.M((0,0,0),anchor='S') # Transistor
 	trace1 = cir.T([tran1.D,tran1.D+(0,-500)]) # Short trace to resistor
@@ -18,5 +19,5 @@ def main():
 	# Traces
 	cir.T([sup1.C,tran1.S])
 	cir.T([res1.R,gnd1.C])
-	cir.T([tran1.D+(0,-250),tran1.D+(1000,-250),out1.C],trace_R=10)
-	#cir.T([tran1.G1,inp1.C],secs=mc.CurveSec(W=250,H=-50))
+	cir.T([tran1.D+(0,-250),tran1.D+(1000,-250),out1.C],trace_R=500)
+	cir.T([tran1.G1,inp1.C],secs=mc.CurveSec(W=250,H=-30))

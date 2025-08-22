@@ -57,7 +57,7 @@ class CurveSec(Section):
 		'''Constructor for a Curvilinear section.'''
 		self.W = W
 		self.H = H
-		self.R = H if R is None else R
+		self.R = abs(H) if R is None else R
 		self.span = W # Used to avoid loft self-intersections
 		h = abs(H*1e-6) # SI height
 		w = abs(W*1e-6) # SI width
@@ -80,7 +80,7 @@ class CurveSec(Section):
 		# Here we draw the section normal to x axis, then rotate it.
 		W = self.W
 		H = self.H
-		R = self.R
+		R = self.R # Must undersize slightly
 		px = [0,0,0,0]
 		py = [-W/2,W/2,W/2,-W/2]
 		pz = [0,0,H,H]
@@ -99,8 +99,8 @@ class CurveSec(Section):
 		for i in range(len(pts)):
 			segs.append(backend.create_seg(comp,pts[i-1],pts[i]))
 		# Add fillets at bottom
-		_, arc1, _ = backend.fillet_2_segs(comp,segs[2],segs[3],R)
-		_, arc2, _ = backend.fillet_2_segs(comp,segs[-1],segs[0],R)
+		segs[2], arc1, segs[3] = backend.fillet_2_segs(comp,segs[2],segs[3],R)
+		segs[-1], arc2, segs[0] = backend.fillet_2_segs(comp,segs[-1],segs[0],R)
 		objs = segs[:3]+[arc1]+[segs[3]]+[arc2] # Add in order
 		path = backend.create_path(comp,objs)
 		return path
@@ -185,7 +185,7 @@ class TubeSec(Section):
 		for i in range(len(pts)):
 			seg1 = backend.create_seg(comp,pts[i-1],pts[i])
 			seg2 = backend.create_seg(comp,pts[i],pts[(i+1)%4])
-			_,fillet,_ = backend.fillet_2_segs(comp,seg1,seg2,R)
+			seg1,fillet,seg2 = backend.fillet_2_segs(comp,seg1,seg2,R)
 			objs.append(fillet)
 		path = backend.create_path(comp,objs)
 		return path

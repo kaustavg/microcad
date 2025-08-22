@@ -26,11 +26,12 @@ class Trace:
 
 		# Drawing parameters
 		eps = 1e-3
+		minR = .1 # Minimum inner edge radius
 		Rs = self.params['trace_R']
 		if not isinstance(Rs,list): # Expand Rs to fill list
 			Rs = [Rs for i in range(len(pts))]
 		# Avoid self-intersections by ensuring R>sec.span/2
-		Rs = [max(Rs[i],secs[i].span/2+eps) for i in range(len(pts))]
+		Rs = [max(Rs[i],secs[i].span/2+minR) for i in range(len(pts))]
 		# Check for length mismatches
 		assert len(pts) == len(secs)
 		assert len(pts) == len(Rs)
@@ -80,10 +81,8 @@ class Trace:
 			isColinear = (us[i]-us[i-1]).m < eps
 			nextseg = backend.create_seg(comp,pts[i],pts[i+1])
 			if not isColinear:
-				currseg = segs[-1]
-				currseg,fillet,nextseg,fstart,fend = backend.fillet_2_segs(
-					comp,currseg,nextseg,Rs[i],return_endpts=True)
-				segs[-1] = currseg
+				segs[-1],fillet,nextseg,fstart,fend = backend.fillet_2_segs(
+					comp,segs[-1],nextseg,Rs[i],return_endpts=True)
 				segs.append(fillet)
 				draws.append((secs[i],fstart,us[i-1]))
 				segs.append(nextseg)

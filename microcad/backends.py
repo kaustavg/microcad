@@ -192,14 +192,14 @@ class FreecadBackend(CADBackend):
 		# and returns [newedge, fillet, newedge]
 		segfillseg = self.Freecad.DraftGeomUtils.fillet(
 			[seg1,seg2],abs(R)*self.units,chamfer=False)
+		seg1 = segfillseg[0]
+		seg2 = segfillseg[-1]
 		if len(segfillseg) == 3:
-			seg1 = segfillseg[0]
 			fillet = segfillseg[1]
-			seg2 = segfillseg[2]
 		else:
 			print('Warning: Fillet failed at')
 			print(self.cad2pt(segfillseg[0].lastVertex().Point))
-			return None
+			fillet = None
 		if return_endpts:
 			return seg1,fillet,seg2,\
 					self.cad2pt(fillet.firstVertex().Point),\
@@ -210,31 +210,31 @@ class FreecadBackend(CADBackend):
 	def create_path(self, comp, objs):
 		'''Return a Part.Wire path from a list of objects.'''
 		segs = [obj for obj in objs if obj is not None]
-		# print('New path')
-		# print(len(segs))
-		# print(segs)
-		# for seg in segs:
-		# 	print(seg)
-		# 	print(seg.firstVertex().Point)
-		# 	print(seg.lastVertex().Point)
-		path = self.Freecad.Part.Wire(segs)
+		try:
+			path = self.Freecad.Part.Wire(segs)
+		except Exception as Err:
+			print('Cannot create path')
+			print(segs)
+			for seg in segs:
+				print((seg.firstVertex().Point,seg.lastVertex().Point))
+			raise Err
 		# self.Freecad.Part.show(path)
 		return path
 
 	def create_sweep(self, comp, path, sec):
 		'''Return a sweep from a path and one section.'''
 		# If path is a FreeCAD wire, use built-in method
-		print(sec)
-		self.Freecad.Part.show(sec)
-		print(path)
-		self.Freecad.Part.show(path)
+		print('Creating sweep')
 		face = self.Freecad.Part.Face(sec)		
 		try:
 			sweep = path.makePipe(face)
-		except:
+		except Exception as Err:
 			self.Freecad.Part.show(face)
-
-		self.Freecad.Part.show(sweep)
+			self.Freecad.Part.show(sec)
+			self.Freecad.Part.show(path)
+			print('Intersecting geometry. Likely radius too small.')
+			raise Err
+		self.Freecad.Part.show(sweep) 
 		return sweep
 
 	def create_loft(self, comp, path, secs):
