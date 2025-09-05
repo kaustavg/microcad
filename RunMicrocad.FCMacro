@@ -1,0 +1,16 @@
+from freecad import module_io
+import sys, time
+
+device_path = r'C:\Path\To\File\Here'
+device_file = 'Amp_Example'
+
+sys.path.append(device_path)
+my_device = module_io.importlib.import_module(device_file)
+module_io.importlib.reload(my_device)
+starttime = time.time()
+#print('Started {}.'.format(device_file))
+my_device.main()
+App.ActiveDocument.recompute()
+message = 'Completed {0} in {1} sec.'.format(
+            device_file,round(time.time()-starttime))
+print(message)

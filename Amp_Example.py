@@ -3,7 +3,6 @@ import microcad as mc
 def main():
 	design = mc.Design(backend='fusion')
 	cir = design.create_circuit()
-	# cir.T([(0,0,0),(1e3,1e3,0e3),(1e3,2e3,0e3),(.5e3,1e3,0e3),(0e3,1e3,0e3)],trace_R=100)
 	# Circuit Components
 	tran1 = cir.M((0,0,0),anchor='S') # Transistor
 	trace1 = cir.T([tran1.D,tran1.D+(0,-500)]) # Short trace to resistor
