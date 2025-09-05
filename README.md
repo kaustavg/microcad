@@ -9,14 +9,14 @@ Typical workflow starts by writing a script in python which specifies the positi
 After creating the python script using the objects from this package, we run a special macro from within Fusion 360 or FreeCAD, which loads our script and executes it, drawing everything on the stage. After the script has been run, the design can be further modified using the usual Fusion 360 or FreeCAD GUI or the script itself can be tweaked and the design regenerated from scratch. It can then be exported as an STL file for 3D printing.
 
 ## Installation
-1. Install Fusion 360 or FreeCAD on your computer
+1. Install Fusion 360 or FreeCAD on your computer.
 2. Place this python package in a folder accessible to PYTHONPATH in your computer, just like any other python package you install. This allows the computer to find the new package when you write programs with it. For Windows, if you want to add a new location to your computer's PYTHONPATH, you can run the following python command:
 ```python
 import sys
 sys.path.append(r'C:\Your\Folder\Here\microcad')
 ```
 3. (Option 1) If you intend to run Microcad using Fusion 360, place the file "RunMicrocad.py" in the "Scripts" folder of your Fusion 360 installation. For Windows, this is typically located in "C:\Users\YourUserNameHere\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\Scripts\". This is the macro that will be run from within Fusion 360 to generate the design.
-3. (Option 2) If you intend to run Microcad using FreeCAD, place the file "RunMicrocad.FCMacro" in the "Macros" folder of your FreeCAD installation. For Windows, this is typically located in "C:\Users\YourUserNameHere\AppData\Roaming\FreeCAD\Macro\". This is the macro that will be run from within FreeCAD to generate the design.
+4. (Option 2) If you intend to run Microcad using FreeCAD, place the file "RunMicrocad.FCMacro" in the "Macros" folder of your FreeCAD installation. For Windows, this is typically located in "C:\Users\YourUserNameHere\AppData\Roaming\FreeCAD\Macro\". This is the macro that will be run from within FreeCAD to generate the design.
 
 ## Annotated Example Script
 As an example we will be drawing a simple common-source amplifier consisting of one transistor, one resistor, and four ports. The entire script to generate this design in Fusion 360 is given below:
