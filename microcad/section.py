@@ -11,6 +11,10 @@ class Section:
 	# TBD: Implement a method called "invert" to return a new section with 
 	# inverted height in Z. Currently, we just copy the section and rewrite the 
 	# value for Section.H to -Section.H
+
+	# Note: When drawing, make span of all sections slightly smaller than stated
+	# to avoid floating point errors when lofting.
+	eps = 0 # 1 nm
 	def __eq__(self, other) : 
 	# Equality is used to determine whether to use loft or sweep
 		return self.__dict__ == other.__dict__
@@ -30,7 +34,8 @@ class RecSec(Section):
 	def draw(self,circuit,pc,n):
 		'''Return the path centered around pc normal to n.'''
 		# Here we draw the section normal to x axis, then rotate it.
-		W = self.W
+		W = self.W - self.eps
+		print(W)
 		H = self.H
 		px = [0,0,0,0]
 		py = [-W/2,W/2,W/2,-W/2]
@@ -78,7 +83,7 @@ class CurveSec(Section):
 	def draw(self,circuit,pc,n):
 		'''Return the path centered around pc normal to n.'''
 		# Here we draw the section normal to x axis, then rotate it.
-		W = self.W
+		W = self.W - self.eps
 		H = self.H
 		R = self.R
 		px = [0,0,0,0]
@@ -125,7 +130,7 @@ class CurveSec(Section):
 class TrapzSec(Section):
 	def __init__(self,W=250, H=50, Wt=None, Ht=None):
 		'''Constructor for Trapezoidal Section.'''
-		self.W = W
+		self.W = W 
 		self.H = H
 		# Height and Width of tapered section is Ht and Wt
 		self.Wt = W-2*abs(H) if Wt is None else Wt
@@ -135,7 +140,7 @@ class TrapzSec(Section):
 	def draw(self,circuit,pc,n):
 		'''Return the path centered around pc normal to n.'''
 		# Here we draw the section normal to x axis, then rotate it.
-		W = self.W
+		W = self.W - self.eps
 		H = self.H
 		Wt = self.Wt
 		Ht = self.Ht
@@ -176,7 +181,7 @@ class TubeSec(Section):
 		'''Return the path centered around pc normal to n.'''
 
 		# Draw this by drawing a box normal to x axis, then fillet edges
-		R = self.R
+		R = self.R - self.eps
 		px = [0,0,0,0]
 		py = [-R,R,R,-R]
 		pz = [-R,-R,R,R]

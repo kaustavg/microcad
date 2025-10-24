@@ -26,7 +26,7 @@ class Trace:
 
 		# Drawing parameters
 		eps = 1e-3
-		minR = 2 # Minimum inner edge radius ##TBD FIX THIS IT'S TOO HIGH
+		minR = 1e-2 # Minimum inner edge radius ##TBD FIX THIS IT'S TOO HIGH
 		Rs = self.params['trace_R']
 		if not isinstance(Rs,list): # Expand Rs to fill list
 			Rs = [Rs for i in range(len(pts))]
@@ -83,8 +83,9 @@ class Trace:
 			if not isColinear:
 				segs[-1],fillet,nextseg,fstart,fend = backend.fillet_2_segs(
 					comp,segs[-1],nextseg,Rs[i],return_endpts=True)
-				segs.append(fillet)
-				draws.append((secs[i],fstart,us[i-1]))
+				if fillet is not None:
+					segs.append(fillet)
+					draws.append((secs[i],fstart,us[i-1]))
 				segs.append(nextseg)
 				draws.append((secs[i],fend,us[i]))
 			else: # Colinear
@@ -94,6 +95,7 @@ class Trace:
 		draws.append((secs[-1],pts[-1],us[-1]))
 
 		# Now step through segments and sweep or loft as needed
+		trace = []
 		startind = 0
 		for i in range(len(segs)): # Note: len(draws)=1+len(segs)
 			if draws[i][0] != draws[i+1][0]: # Must loft
@@ -102,17 +104,20 @@ class Trace:
 					path = backend.create_path(comp,segs[startind:i])
 					sweep = backend.create_sweep(comp,path,
 						draws[i][0].draw(circuit,draws[i][1],draws[i][2]))
+					trace.append(sweep)
 				# Loft this segment
 				loftpath = backend.create_path(comp,segs[i:i+1]) # TODO: does it need to be a path?
 				loftdraws = [draws[i][0].draw(circuit,draws[i][1],draws[i][2]),
 					draws[i+1][0].draw(circuit,draws[i+1][1],draws[i+1][2])]
 				loft = backend.create_loft(comp,loftpath,loftdraws)
+				trace.append(loft)
 				startind = i+1
 		# Finally, if we hit the end sweep all that remains
 		if startind < len(segs):
 			path = backend.create_path(comp,segs[startind:])
 			draw = draws[-1][0].draw(circuit,draws[-1][1],draws[-1][2])
 			sweep = backend.create_sweep(comp,path,draw)
+			trace.append(sweep)
 
 		# Draw endcaps (TBD: 'square' is only axis aligned right now)
 		# TBD: trace_cap is only accurate for RecSec, others make rectangular cap!
@@ -239,7 +244,7 @@ class Resistor:
 		wiggle_dist = n*(2*R + math.pi*R)
 		# Compute the the wedge distances for entry and exit
 		wedge_dist = (L-(n*R*4))/2
-		# Compute the resistance with minimum wiggle amplitude
+		# Compute the resistance with[(secs[0],pts[0],us[0])]  minimum wiggle amplitude
 		min_res = MU * (R_sec.res_muL*wiggle_dist
 			+ (R_sec.res_muL+T_sec.res_muL)*wedge_dist)
 		min_res *= 1e-18 # Convert from 1/(m^4)*Pa*s*um to kPa*s/ul
@@ -287,6 +292,21 @@ class Resistor:
 		self.L = points[0]
 		self.R = points[-1]
 		self.C = self.L%self.R
+
+class Revolution:
+	def __init__(self,circuit,pt,sec,norm,ang,offset=(0,0,0),axis=(0,0,1)):
+		'''Constructor for revolution solid.'''
+		self.circuit = circuit
+		self.pt = Pt(*pt) if isinstance(pt,tuple) else pt
+		self.sec = sec
+		self.norm = Pt(*norm) if isinstance(norm,tuple) else norm
+		self.ang = ang
+		self.offset = Pt(*offset) if isinstance(offset,tuple) else offset
+		self.axis = Pt(*axis) if isinstance(axis,tuple) else axis
+
+		draw = sec.draw(circuit,self.pt,self.norm)
+		rev = circuit.design.backend.create_revolution(
+			draw,self.pt+self.offset,self.axis,self.ang)
 
 # class Text:
 # 	def __init__(self,circuit,pt,text,zspan=None,size=300,**kwargs):

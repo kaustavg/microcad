@@ -19,6 +19,8 @@ import math
 class Pt:
 	def __init__(self,x=0,y=0,z=0):
 		'''Point constructor'''
+		if isinstance(x,Pt):
+			x, y, z = x.x, x.y, x.z
 
 		self.x = x
 		self.y = y

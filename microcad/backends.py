@@ -202,9 +202,12 @@ class FreecadBackend(CADBackend):
 			print('Continuing without fillet.')
 			fillet = None
 		if return_endpts:
+			# return seg1,fillet,seg2,\
+			# 		self.cad2pt(fillet.firstVertex().Point),\
+			# 		self.cad2pt(fillet.lastVertex().Point)
 			return seg1,fillet,seg2,\
-					self.cad2pt(fillet.firstVertex().Point),\
-					self.cad2pt(fillet.lastVertex().Point)
+					self.cad2pt(seg1.lastVertex().Point),\
+					self.cad2pt(seg2.firstVertex().Point)
 		else:
 			return seg1,fillet,seg2
 
@@ -228,14 +231,16 @@ class FreecadBackend(CADBackend):
 		face = self.Freecad.Part.Face(sec)		
 		try:
 			sweep = path.makePipe(face)
+			self.Freecad.Part.show(sweep) 
+			return sweep
 		except Exception as Err:
 			self.Freecad.Part.show(face)
 			self.Freecad.Part.show(sec)
 			self.Freecad.Part.show(path)
 			print('Intersecting geometry. Likely radius too small.')
-			raise Err
-		self.Freecad.Part.show(sweep) 
-		return sweep
+			# print('Trying loft...')
+			# return self.create_loft(comp,path,[sec,sec])
+		
 
 	def create_loft(self, comp, path, secs):
 		'''Return a loft from a path and multiple sections.'''
@@ -256,3 +261,10 @@ class FreecadBackend(CADBackend):
 		# "Part::Feature","Loft")
 		# myObj.Shape = sweep
 		# return myObj
+
+	def create_revolution(self, sec, axispt, axis=Pt(0,0,1), ang=180):
+		'''Return a revolved solid from a section, position, axis of rotation, and angle.'''
+		face = self.Freecad.Part.Face(sec)
+		solid = face.revolve(self.pt2cad(axispt),self.pt2cad(axis),ang)
+		self.Freecad.Part.show(solid)
+		return solid

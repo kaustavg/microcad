@@ -27,7 +27,7 @@ class Design:
 			'sub_H': 4000, # Substrate thickness in UM
 			# Element parameters
 			'trace_sec': RecSec(W=250, H=50), # Default section
-			'trace_R': 250, # Trace radius of curvature in UM
+			'trace_R': 0, # Trace radius of curvature in UM
 			'trace_cap': 'none', # Trace endcap ('none','round','square')
 			'chan_sec': RecSec(W=250, H=50), # Transistor flow channel section
 			'gate_sec': RecSec(W=250, H=-50), # Transistor gate section
@@ -126,3 +126,10 @@ class Circuit:
 		self.elements.append(txt)
 		# self.clean_sketch()
 		return txt
+
+	def rev(self,*args,**kwargs):
+		'''Add a Resistor to the circuit.'''
+		rev = Revolution(self,*args,**kwargs)
+		self.elements.append(rev)
+		# self.clean_sketch()
+		return rev
