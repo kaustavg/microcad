@@ -197,9 +197,16 @@ class FreecadBackend(CADBackend):
 		if len(segfillseg) == 3:
 			fillet = segfillseg[1]
 		else:
-			print('Warning: Fillet failed at')
-			print(self.cad2pt(segfillseg[0].lastVertex().Point))
-			print('Continuing without fillet.')
+			print('Warning ',R,'um Fillet failed at: ',
+				self.cad2pt(segfillseg[0].lastVertex().Point)/1e3,'mm.')
+			seg1p1 = self.cad2pt(seg1.firstVertex().Point)
+			seg1p2 = self.cad2pt(seg1.lastVertex().Point)
+			seg2p1 = self.cad2pt(seg2.firstVertex().Point)
+			seg2p2 = self.cad2pt(seg2.lastVertex().Point)
+			print('Seg1 Len: ',(seg1p2-seg1p1).m,
+				'um. Seg2 Len: ',(seg2p2-seg2p1).m,'um.')
+			print('Attempting smaller radius',R-1,'um.')
+			return self.fillet_2_segs(comp,seg1,seg2,R-1,return_endpts)
 			fillet = None
 		if return_endpts:
 			# return seg1,fillet,seg2,\
@@ -222,7 +229,7 @@ class FreecadBackend(CADBackend):
 			for seg in segs:
 				print((seg.firstVertex().Point,seg.lastVertex().Point))
 			raise Err
-		# self.Freecad.Part.show(path)
+		self.Freecad.Part.show(path) # TBD Remove in final for speed
 		return path
 
 	def create_sweep(self, comp, path, sec):

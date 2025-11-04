@@ -40,6 +40,10 @@ class Pt:
 			d.y*math.cos(rads)+d.x*math.sin(rads),
 			d.z)
 
+	def dot(self,other):
+		'''Returns the dot product of two point vectors.'''
+		return self.x*other.x + self.y*other.y + self.z*other.z
+
 
 	# Overloaded operators
 	def __or__(self,other):

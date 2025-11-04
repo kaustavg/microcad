@@ -26,7 +26,7 @@ class Trace:
 
 		# Drawing parameters
 		eps = 1e-3
-		minR = 1e-2 # Minimum inner edge radius ##TBD FIX THIS IT'S TOO HIGH
+		minR = 0 # Minimum inner edge radius ##TBD FIX THIS IT'S TOO HIGH
 		Rs = self.params['trace_R']
 		if not isinstance(Rs,list): # Expand Rs to fill list
 			Rs = [Rs for i in range(len(pts))]
@@ -98,7 +98,12 @@ class Trace:
 		trace = []
 		startind = 0
 		for i in range(len(segs)): # Note: len(draws)=1+len(segs)
-			if draws[i][0] != draws[i+1][0]: # Must loft
+			isLoft = draws[i][0] != draws[i+1][0]
+			span = draws[i][0].span
+			m = (draws[i][1] - draws[i+1][1]).m
+			# print(2*m**2/span**2 + draws[i][2].dot(draws[i+1][2])) # Cos rule
+			# isRev = (not isLot) and (eps > abs(2*m**2/span**2+)
+			if isLoft: # Must loft
 				# Sweep segs since last loft (startind) if there are any
 				if startind < i:
 					path = backend.create_path(comp,segs[startind:i])
@@ -112,6 +117,7 @@ class Trace:
 				loft = backend.create_loft(comp,loftpath,loftdraws)
 				trace.append(loft)
 				startind = i+1
+
 		# Finally, if we hit the end sweep all that remains
 		if startind < len(segs):
 			path = backend.create_path(comp,segs[startind:])

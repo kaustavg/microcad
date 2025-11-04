@@ -35,7 +35,6 @@ class RecSec(Section):
 		'''Return the path centered around pc normal to n.'''
 		# Here we draw the section normal to x axis, then rotate it.
 		W = self.W - self.eps
-		print(W)
 		H = self.H
 		px = [0,0,0,0]
 		py = [-W/2,W/2,W/2,-W/2]

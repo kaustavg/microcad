@@ -20,5 +20,5 @@ def main():
 	# cir.T([tran1.G1,inp1.C],secs=mc.CurveSec(W=250,H=-30))
 
 	o = cir.origin
-	# trace = cir.T([o,o+(0,260),o+(500,260),o+(500,520)])
-	rev = cir.rev(o,cir.params['trace_sec'],(0,1,0),90,(125,0,0))
+	trace = cir.T([o,o+(0,250),o+(500,250),o+(500,500)])
+	# rev = cir.rev(o,cir.params['trace_sec'],(0,1,0),90,(125,0,0))
