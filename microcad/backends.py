@@ -113,6 +113,7 @@ class FusionBackend(CADBackend):
 
 	def create_sweep(self,comp,path,sec):
 		'''Return a sweep from a path and one section.'''
+		# TBD: If a sweep starts and ends at the same point, can create degenerate geometry.
 		sweep_inp = comp.features.sweepFeatures.createInput(
 			sec,path,self.adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
 		# raise Exception(path.count)
