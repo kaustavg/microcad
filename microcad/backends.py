@@ -182,9 +182,9 @@ class FreecadBackend(CADBackend):
 		or (type(c) is self.Freecad.Part.Solid)]
 		fused = shapes[0]
 		for i in range(1,len(shapes)):
-			print(shapes[i])
-			fused = shapes[i].fuse(fused).removeSplitter()
-		self.Freecad.Part.show(fused)
+			fused = shapes[i].fuse(fused)
+		union = fused.removeSplitter()
+		self.Freecad.Part.show(union)
 
 	## DRAWING METHODS
 	def create_seg(self, comp, pt1, pt2):
