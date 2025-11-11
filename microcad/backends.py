@@ -177,7 +177,9 @@ class FreecadBackend(CADBackend):
 
 	def clean_component(self, comp):
 		'''Combine existing shapes into Compound for speed.'''
-		shapes = [c for c in comp if type(c) is self.Freecad.Part.Shape]
+		shapes = [c for c in comp 
+		if (type(c) is self.Freecad.Part.Shape)
+		or (type(c) is self.Freecad.Part.Solid)]
 		obj = self.Freecad.Part.makeCompound(shapes)
 		self.Freecad.Part.show(obj)
 
