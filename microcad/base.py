@@ -55,10 +55,14 @@ class Design:
 	def create_circuit(self,*args,**kwargs):
 		'''Return a circuit to the design.'''
 		cir = Circuit(self,*args,**kwargs)
-		# Optional: Clean the latest circuit before making new one
-		if len(self.circuits)>0: self.circuits[-1].clean_sketch()
+		# Clean the latest circuit before making new one
+		if len(self.circuits)>0: self.circuits[-1].clean()
 		self.circuits.append(cir)
 		return cir
+
+	def clean(self):
+		'''Clean the latest circuit in the design.'''
+		self.circuits[-1].clean()
 
 	def draw_substrate(self,xlen,ylen,zspan,origin=None):
 		'''Draw a cuboid centered at 0,0 from z[0] to z[1].'''
@@ -86,7 +90,7 @@ class Circuit:
 		# Create appropriate component for the design's backend
 		self.component = self.design.backend.create_component()
 
-	def clean_sketch(self):
+	def clean(self):
 		'''Deletes the existing sketch and creates a fresh sketch for performance improvements.'''
 		self.design.backend.clean_component(self.component)
 
@@ -95,28 +99,28 @@ class Circuit:
 		'''Add a Trace to the circuit.'''
 		trace = Trace(self,*args,**kwargs)
 		self.elements.append(trace)
-		# self.clean_sketch()
+		# self.clean()
 		return trace
 
 	def V(self,*args,**kwargs):
 		'''Add a Via to the circuit.'''
 		via = Via(self,*args,**kwargs)
 		self.elements.append(via)
-		# self.clean_sketch()
+		# self.clean()
 		return via
 
 	def M(self,*args,**kwargs):
 		'''Add a Transistor to the circuit.'''
 		trans = Transistor(self,*args,**kwargs)
 		self.elements.append(trans)
-		# self.clean_sketch()
+		# self.clean()
 		return trans
 
 	def R(self,*args,**kwargs):
 		'''Add a Resistor to the circuit.'''
 		res = Resistor(self,*args,**kwargs)
 		self.elements.append(res)
-		# self.clean_sketch()
+		# self.clean()
 		return res
 
 	def text(self,*args,**kwargs):
@@ -124,12 +128,12 @@ class Circuit:
 		return
 		txt = Text(self,*args,**kwargs)
 		self.elements.append(txt)
-		# self.clean_sketch()
+		# self.clean()
 		return txt
 
 	def rev(self,*args,**kwargs):
 		'''Add a Resistor to the circuit.'''
 		rev = Revolution(self,*args,**kwargs)
 		self.elements.append(rev)
-		# self.clean_sketch()
+		# self.clean()
 		return rev

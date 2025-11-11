@@ -20,10 +20,11 @@ class Section:
 		return self.__dict__ == other.__dict__
 
 class RecSec(Section):
-	def __init__(self,W=250, H=50):
+	def __init__(self, W=250, H=50, offset=(0,0,0)):
 		'''Constructor for Rectangular Section.'''
 		self.W = W
 		self.H = H
+		self.offset = Pt(*offset) if isinstance(offset,tuple) else offset
 		self.span = W # Used to avoid loft self-intersections
 		h = abs(H*1e-6) # SI height
 		w = abs(W*1e-6) # SI width
@@ -39,6 +40,9 @@ class RecSec(Section):
 		px = [0,0,0,0]
 		py = [-W/2,W/2,W/2,-W/2]
 		pz = [0,0,H,H]
+		px = [x+self.offset.x for x in px]
+		py = [y+self.offset.y for y in py]
+		pz = [z+self.offset.z for z in pz]
 		# Rotate the x and y
 		u = n/n.m
 		rotm = [[u.x,-u.y],[u.y,u.x]]
@@ -57,11 +61,12 @@ class RecSec(Section):
 		return path
 
 class CurveSec(Section):
-	def __init__(self,W=250,H=50,R=None):
+	def __init__(self, W=250, H=50, R=None, offset=(0,0,0)):
 		'''Constructor for a Curvilinear section.'''
 		self.W = W
 		self.H = H
 		self.R = abs(H) if R is None else abs(R)
+		self.offset = Pt(*offset) if isinstance(offset,tuple) else offset
 		self.span = W # Used to avoid loft self-intersections
 		h = abs(H*1e-6) # SI height
 		w = abs(W*1e-6) # SI width
@@ -88,6 +93,9 @@ class CurveSec(Section):
 		px = [0,0,0,0]
 		py = [-W/2,W/2,W/2,-W/2]
 		pz = [0,0,H,H]
+		px = [x+self.offset.x for x in px]
+		py = [y+self.offset.y for y in py]
+		pz = [z+self.offset.z for z in pz]
 		# Rotate the x and y
 		u = n/n.m
 		rotm = [[u.x,-u.y],[u.y,u.x]]
@@ -127,13 +135,14 @@ class CurveSec(Section):
 			return path
 
 class TrapzSec(Section):
-	def __init__(self,W=250, H=50, Wt=None, Ht=None):
+	def __init__(self, W=250, H=50, Wt=None, Ht=None, offset=(0,0,0)):
 		'''Constructor for Trapezoidal Section.'''
 		self.W = W 
 		self.H = H
 		# Height and Width of tapered section is Ht and Wt
 		self.Wt = W-2*abs(H) if Wt is None else Wt
 		self.Ht = math.copysign((W-self.Wt)/2,H) if Ht is None else Ht 
+		self.offset = Pt(*offset) if isinstance(offset,tuple) else offset
 		self.span = W # Used to avoid loft self-intersections
 
 	def draw(self,circuit,pc,n):
@@ -147,6 +156,9 @@ class TrapzSec(Section):
 		px = [0,0,0,0,0,0]
 		py = [-W/2+dW,W/2-dW,W/2,W/2,-W/2,-W/2]
 		pz = [H,H,H-Ht,0,0,H-Ht]
+		px = [x+self.offset.x for x in px]
+		py = [y+self.offset.y for y in py]
+		pz = [z+self.offset.z for z in pz]
 		# Rotate the x and y
 		u = n/n.m
 		rotm = [[u.x,-u.y],[u.y,u.x]]
@@ -166,9 +178,10 @@ class TrapzSec(Section):
 		return path
 
 class TubeSec(Section):
-	def __init__(self,R=250):
+	def __init__(self, R=250, offset=(0,0,0)):
 		'''Constructor for a Tube section (also used in Vias).'''
 		self.R = R
+		self.offset = Pt(*offset) if isinstance(offset,tuple) else offset
 		self.span = 2*R # Used to avoid loft self-intersections
 		
 		r = abs(self.R*1e-6) # SI radius
@@ -178,13 +191,14 @@ class TubeSec(Section):
 
 	def draw(self,circuit,pc,n):
 		'''Return the path centered around pc normal to n.'''
-
 		# Draw this by drawing a box normal to x axis, then fillet edges
 		R = self.R - self.eps
 		px = [0,0,0,0]
 		py = [-R,R,R,-R]
 		pz = [-R,-R,R,R]
-
+		px = [x+self.offset.x for x in px]
+		py = [y+self.offset.y for y in py]
+		pz = [z+self.offset.z for z in pz]
 		# Rotate the x and y
 		u = n/n.m
 		rotm = [[u.x,-u.y],[u.y,u.x]]

@@ -171,21 +171,24 @@ class FreecadBackend(CADBackend):
 		return Pt(cadpt.x/self.units,cadpt.y/self.units,cadpt.z/self.units)
 
 	def create_component(self):
-		'''Return a new FreeCAD component (Part Feature).'''
-		comp = self._doc.addObject('Part::Feature', 'Component')
-		# self.clean_component(comp)
+		'''Return a new FreeCAD component (list of Shapes).'''
+		comp = []
 		return comp
 
 	def clean_component(self, comp):
-		'''Remove existing sketches and create a new sketch.'''
-		pass
+		'''Combine existing shapes into Compound for speed.'''
+		shapes = [c for c in comp if type(c) is self.Freecad.Part.Shape]
+		obj = self.Freecad.Part.makeCompound(shapes)
+		self.Freecad.Part.show(obj)
 
 	## DRAWING METHODS
 	def create_seg(self, comp, pt1, pt2):
 		'''Return a segment between two points.'''
 		# This returns a FreeCAD Edge object
-		return self.Freecad.Part.makeLine(
+		seg = self.Freecad.Part.makeLine(
 			self.pt2cad(pt1),self.pt2cad(pt2))
+		comp.append(seg)
+		return seg
 
 	def fillet_2_segs(self, comp, seg1, seg2, R, return_endpts=False):
 		'''Create a fillet between two lines and return seg, arc, seg. Optionally return endpts of arc.'''
@@ -206,8 +209,8 @@ class FreecadBackend(CADBackend):
 			seg2p2 = self.cad2pt(seg2.lastVertex().Point)
 			print('Seg1 Len: ',(seg1p2-seg1p1).m,
 				'um. Seg2 Len: ',(seg2p2-seg2p1).m,'um.')
-			print('Attempting smaller radius',R-1,'um.')
-			return self.fillet_2_segs(comp,seg1,seg2,R-1,return_endpts)
+			# print('Attempting smaller radius',R-1,'um.')
+			# return self.fillet_2_segs(comp,seg1,seg2,R-1,return_endpts)
 			fillet = None
 		if return_endpts:
 			# return seg1,fillet,seg2,\
@@ -230,7 +233,8 @@ class FreecadBackend(CADBackend):
 			for seg in segs:
 				print((seg.firstVertex().Point,seg.lastVertex().Point))
 			raise Err
-		self.Freecad.Part.show(path) # TBD Remove in final for speed
+		comp.append(path)
+		# self.Freecad.Part.show(path) # TBD Remove in final for speed
 		return path
 
 	def create_sweep(self, comp, path, sec):
@@ -239,7 +243,8 @@ class FreecadBackend(CADBackend):
 		face = self.Freecad.Part.Face(sec)		
 		try:
 			sweep = path.makePipe(face)
-			self.Freecad.Part.show(sweep) 
+			comp.append(sweep)
+			# self.Freecad.Part.show(sweep) 
 			return sweep
 		except Exception as Err:
 			self.Freecad.Part.show(face)
@@ -263,16 +268,18 @@ class FreecadBackend(CADBackend):
 		loft_inp.makeSolid()
 		loft = loft_inp.shape()
 
-		self.Freecad.Part.show(loft) # Below lines may be faster since no need to recompute
+		comp.append(loft)
+		# self.Freecad.Part.show(loft) # Below lines may be faster since no need to recompute
 		return loft
 		# myObj = self.Freecad.App.ActiveDocument.addObject(
 		# "Part::Feature","Loft")
 		# myObj.Shape = sweep
 		# return myObj
 
-	def create_revolution(self, sec, axispt, axis=Pt(0,0,1), ang=180):
+	def create_revolution(self, comp, sec, axispt, axis=Pt(0,0,1), ang=180):
 		'''Return a revolved solid from a section, position, axis of rotation, and angle.'''
 		face = self.Freecad.Part.Face(sec)
 		solid = face.revolve(self.pt2cad(axispt),self.pt2cad(axis),ang)
-		self.Freecad.Part.show(solid)
+		comp.append(solid)
+		# self.Freecad.Part.show(solid)
 		return solid

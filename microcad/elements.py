@@ -303,6 +303,7 @@ class Revolution:
 	def __init__(self,circuit,pt,sec,norm,ang,offset=(0,0,0),axis=(0,0,1)):
 		'''Constructor for revolution solid.'''
 		self.circuit = circuit
+		comp = circuit.component
 		self.pt = Pt(*pt) if isinstance(pt,tuple) else pt
 		self.sec = sec
 		self.norm = Pt(*norm) if isinstance(norm,tuple) else norm
@@ -311,7 +312,7 @@ class Revolution:
 		self.axis = Pt(*axis) if isinstance(axis,tuple) else axis
 
 		draw = sec.draw(circuit,self.pt,self.norm)
-		rev = circuit.design.backend.create_revolution(
+		rev = circuit.design.backend.create_revolution(comp,
 			draw,self.pt+self.offset,self.axis,self.ang)
 
 # class Text:
