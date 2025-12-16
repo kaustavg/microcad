@@ -18,6 +18,7 @@ class Trace:
 			secs = circuit.params['trace_sec']
 		if isinstance(secs,Section): # Expand sections to fill list
 			secs = [secs for i in range(len(pts))]
+		assert len(pts) == len(secs)
 		self.secs = secs
 		self.params = circuit.params.copy()
 		for key in kwargs: # Overwrite params with kw params
@@ -30,6 +31,7 @@ class Trace:
 		Rs = self.params['trace_R']
 		if not isinstance(Rs,list): # Expand Rs to fill list
 			Rs = [Rs for i in range(len(pts))]
+		assert len(pts) == len(Rs)
 		# Avoid self-intersections by ensuring R>sec.span/2
 		Rs = [max(Rs[i],secs[i].span/2+minR) for i in range(len(pts))]
 		# Check for length mismatches

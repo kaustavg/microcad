@@ -177,13 +177,18 @@ class FreecadBackend(CADBackend):
 
 	def clean_component(self, comp):
 		'''Combine existing shapes for speed.'''
+		toFuse = True # Takes longer but fuses parts
 		shapes = [c.removeSplitter() for c in comp 
 		if (type(c) is self.Freecad.Part.Shape)
 		or (type(c) is self.Freecad.Part.Solid)]
-		fused = shapes[0].fuse(shapes[1:]) # Tolerance 0.0
-		union = fused.removeSplitter()
-		# union = self.Freecad.Part.makeCompound(shapes)
-		self.Freecad.Part.show(union)
+		if toFuse and len(shapes) > 1:
+			fused = shapes[0].fuse(shapes[1:]) # Tolerance 0.0
+			union = fused.removeSplitter()
+			self.Freecad.Part.show(union)
+		else:
+			compound = self.Freecad.Part.makeCompound(shapes)
+			self.Freecad.Part.show(compound)
+		
 
 	## DRAWING METHODS
 	def create_seg(self, comp, pt1, pt2):
