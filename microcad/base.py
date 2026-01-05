@@ -62,7 +62,8 @@ class Design:
 
 	def clean(self):
 		'''Clean the latest circuit in the design.'''
-		self.circuits[-1].clean()
+		if len(self.circuits) >= 1:
+			self.circuits[-1].clean()
 
 	def draw_substrate(self,xlen,ylen,zspan,origin=None):
 		'''Draw a cuboid centered at 0,0 from z[0] to z[1].'''

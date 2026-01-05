@@ -26,8 +26,8 @@ class RecSec(Section):
 		self.H = H
 		self.offset = Pt(*offset) if isinstance(offset,tuple) else offset
 		self.span = W # Used to avoid loft self-intersections
-		h = abs(H*1e-6) # SI height
-		w = abs(W*1e-6) # SI width
+		h = abs(min(H,W)*1e-6) # SI height
+		w = abs(max(H,W)*1e-6) # SI width
 		# Multiply following by mu*L to obtain resistance in SI
 		# This has units of 1/(m^4)
 		self.res_muL = 12/((1-0.63*(h/w))*h**3*w)
