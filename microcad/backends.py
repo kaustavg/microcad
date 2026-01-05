@@ -177,7 +177,7 @@ class FreecadBackend(CADBackend):
 
 	def clean_component(self, comp, toFuse=True):
 		'''Combine existing shapes for speed.'''
-		toFuse = True # Takes longer but fuses parts
+		# toFuse takes longer but fuses parts
 		shapes = [c.removeSplitter() for c in comp 
 		if (type(c) is self.Freecad.Part.Shape)
 		or (type(c) is self.Freecad.Part.Solid)]
@@ -193,19 +193,25 @@ class FreecadBackend(CADBackend):
 
 	def slice_component(self,comp,z):
 		'''Return compound of wires formed by XY slicing at z.'''
-		sliced = sweep.slice(Base.Vector(0,0,1),z) # Makes list of wires
-		compound = Part.Compound(sliced)
-		self.Freecad.Part.show(compound)
-		return compound
+		shape = self.Freecad.Part.Shape(self.Freecad.Part.makeCompound(comp))
+		wires = shape.slice(self.pt2cad(Pt(0,0,1e3)),z*self.units)
+		return wires # Return a list of wires
 
-	def export_dxf(self,comp,filename):
-		'''Saves a compound of wires as a dxf using legacy settings.'''
+	def export_dxf(self,sliced,filename):
+		'''Saves a list of wires as a dxf using legacy settings.'''
 		import importDXF
+
+		comp = self.Freecad.Part.Compound(sliced)
+		obj = self.Freecad.App.ActiveDocument.addObject("Part::Feature","L")
+		obj.Shape = comp
+
+		# Import.writeDXFObject(objectslist, filename)
 		if hasattr(importDXF, "exportOptions"):
 			options = importDXF.exportOptions(filename)
-			importDXF.export(comp,filename, options)
+			print(f"{options=}")
+			importDXF.export([obj],filename, options)
 		else:
-			importDXF.export(comp,filename)
+			importDXF.export([obj],filename)
 
 	## DRAWING METHODS
 	def create_seg(self, comp, pt1, pt2):

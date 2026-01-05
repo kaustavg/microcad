@@ -73,23 +73,18 @@ class Design:
 		substrate = circuit.T([left,right],
 			secs=RecSec(W=ylen,H=zspan[1]-zspan[0]))
 
-	def slicedxf(self,zlist):
-		'''Slice the 3D model into 2D DXF files.'''
+	def slice_dxf(self,zlist,filename):
+		'''Slice the 3D model, and save DXFs as filename_Lx.dxf'''
 		# TBD: Only works in FreeCAD backend.
-		
-		# Go through all circuits and select all components
-		comps = []
-		for cir in self.circuits:
-			comps += cir.component
-		# Make it all one compound
-		comp = self.backend.clean_component(comps,toFuse=True)
-		for z in zlist:
-			sliced = self.backend.slice_component(comp,z)
-			#self.backend.export_dxf(sliced,u"/home/kaustavg/Downloads/test.dxf")
 
-
-		
-
+		# Go through each z, and through each circuit
+		for i in range(len(zlist)):
+			filelabel = filename + f"_L{i}.dxf"
+			sliced = []
+			for cir in self.circuits:
+				sliced += self.backend.slice_component(cir.component,zlist[i])
+			self.backend.export_dxf(sliced,filelabel)
+			
 class Circuit:
 	def __init__(self,design,origin=Pt(0,0,0),**kwargs):
 		'''Construct the Circuit'''
