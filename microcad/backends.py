@@ -175,7 +175,7 @@ class FreecadBackend(CADBackend):
 		comp = []
 		return comp
 
-	def clean_component(self, comp):
+	def clean_component(self, comp, toFuse=True):
 		'''Combine existing shapes for speed.'''
 		toFuse = True # Takes longer but fuses parts
 		shapes = [c.removeSplitter() for c in comp 
@@ -185,10 +185,27 @@ class FreecadBackend(CADBackend):
 			fused = shapes[0].fuse(shapes[1:]) # Tolerance 0.0
 			union = fused.removeSplitter()
 			self.Freecad.Part.show(union)
+			return union
 		else:
 			compound = self.Freecad.Part.makeCompound(shapes)
 			self.Freecad.Part.show(compound)
-		
+			return compound
+
+	def slice_component(self,comp,z):
+		'''Return compound of wires formed by XY slicing at z.'''
+		sliced = sweep.slice(Base.Vector(0,0,1),z) # Makes list of wires
+		compound = Part.Compound(sliced)
+		self.Freecad.Part.show(compound)
+		return compound
+
+	def export_dxf(self,comp,filename):
+		'''Saves a compound of wires as a dxf using legacy settings.'''
+		import importDXF
+		if hasattr(importDXF, "exportOptions"):
+			options = importDXF.exportOptions(filename)
+			importDXF.export(comp,filename, options)
+		else:
+			importDXF.export(comp,filename)
 
 	## DRAWING METHODS
 	def create_seg(self, comp, pt1, pt2):
