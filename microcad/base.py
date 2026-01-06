@@ -60,10 +60,14 @@ class Design:
 		self.circuits.append(cir)
 		return cir
 
-	def clean(self,toFuse=False):
+	def clean(self,allCircuits=False,toFuse=False):
 		'''Clean the latest circuit in the design.'''
 		if len(self.circuits) >= 1:
-			self.circuits[-1].clean(toFuse=toFuse)
+			if allCircuits:
+				for cir in self.circuits:
+					cir.clean(toFuse=toFuse)
+			else:
+				self.circuits[-1].clean(toFuse=toFuse)
 
 	def draw_substrate(self,xlen,ylen,zspan,origin=None):
 		'''Draw a cuboid centered at 0,0 from z[0] to z[1].'''
