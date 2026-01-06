@@ -67,10 +67,11 @@ class FusionBackend(CADBackend):
 		self.clean_component(comp)
 		return comp
 
-	def clean_component(self,comp):
+	def clean_component(self,comp,toFuse=False):
 		'''In-place clean-up of a component for performance.'''
 		# In fusion, can call this after drawing each element
 		# Clears all existing sketches in the component and makes a fresh one
+		# TBD: if toFuse is true, perform a boolean union of all objects
 		for i in range(comp.sketches.count):
 			sketch = comp.sketches.item(i)
 			sketch.deleteMe()
@@ -175,7 +176,7 @@ class FreecadBackend(CADBackend):
 		comp = []
 		return comp
 
-	def clean_component(self, comp, toFuse=True):
+	def clean_component(self, comp, toFuse=False):
 		'''Combine existing shapes for speed.'''
 		# toFuse takes longer but fuses parts
 		shapes = [c.removeSplitter() for c in comp 

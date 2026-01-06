@@ -60,10 +60,10 @@ class Design:
 		self.circuits.append(cir)
 		return cir
 
-	def clean(self):
+	def clean(self,toFuse=False):
 		'''Clean the latest circuit in the design.'''
 		if len(self.circuits) >= 1:
-			self.circuits[-1].clean()
+			self.circuits[-1].clean(toFuse=toFuse)
 
 	def draw_substrate(self,xlen,ylen,zspan,origin=None):
 		'''Draw a cuboid centered at 0,0 from z[0] to z[1].'''
@@ -102,9 +102,9 @@ class Circuit:
 		# Create appropriate component for the design's backend
 		self.component = self.design.backend.create_component()
 
-	def clean(self):
+	def clean(self,toFuse=False):
 		'''Deletes the existing sketch and creates a fresh sketch for performance improvements.'''
-		self.design.backend.clean_component(self.component)
+		self.design.backend.clean_component(self.component,toFuse)
 
 	## Elements
 	def T(self,*args,**kwargs):
