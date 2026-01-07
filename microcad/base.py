@@ -16,7 +16,7 @@ class Design:
 	def __init__(self,backend='fusion',origin=Pt(0,0,0),params=dict()):
 		'''Construct the Design object.'''
 		
-		self.origin = origin # Origin wrt Fusion origin
+		self.origin = origin # Origin wrt CAD origin
 		
 		# Make the params default dictionary
 		self.params = { # Default values
@@ -41,8 +41,6 @@ class Design:
 
 		self.circuits = [] # List of all circuits
 
-		# TODO: Clear all elements on every rerun
-
 		# Set up the appropriate backend
 		if backend.lower() == 'fusion':
 			self.backend = FusionBackend()
@@ -52,36 +50,53 @@ class Design:
 			raise NotImplementedError
 
 
-	def create_circuit(self,*args,**kwargs):
+	def create_circuit(self,name=None,*args,**kwargs):
 		'''Return a circuit to the design.'''
-		cir = Circuit(self,*args,**kwargs)
 		# Clean the latest circuit before making new one
 		if len(self.circuits)>0: self.circuits[-1].clean()
+		cir = Circuit(self,name,*args,**kwargs)
 		self.circuits.append(cir)
 		return cir
 
-	def clean(self,allCircuits=False,toFuse=False):
-		'''Clean the latest circuit in the design.'''
+	def clean(self):
+		'''Clean all circuits in the design.'''
 		if len(self.circuits) >= 1:
-			if allCircuits:
-				for cir in self.circuits:
-					cir.clean(toFuse=toFuse)
-			else:
-				self.circuits[-1].clean(toFuse=toFuse)
+			for cir in self.circuits: cir.clean()
 
-	def draw_substrate(self,xlen,ylen,zspan,origin=None):
-		'''Draw a cuboid centered at 0,0 from z[0] to z[1].'''
-		origin = self.origin if origin is None else origin
-		circuit = self.add_circuit()
-		left = origin + Pt(-xlen/2,0,zspan[0])
-		right = origin + Pt(xlen/2,0,zspan[0])
-		substrate = circuit.T([left,right],
-			secs=RecSec(W=ylen,H=zspan[1]-zspan[0]))
+	def fuse(self):
+		'''Fuse all circuits in the design.'''
+		if len(self.circuits) >= 1:
+			for cir in self.circuits: cir.fuse()
+
+	def show(self):
+		'''Show all circuits in the design.'''
+		if len(self.circuits) >= 1:
+			for cir in self.circuits: cir.show()
+
+	def union(self,circuits):
+		'''Union and fuse a list of circuits into the first circuit.'''
+		# Not implemented in Fusion360
+		fused = [c.fuse() for c in circuits]
+		unioned = fused[0]
+		for i in range(1,len(fused)):
+			unioned.elements += fused[i].elements
+			unioned.component = self.backend.union(unioned.component,fused[i].component)
+			fused[i].delete()
+		fused[0] = unioned
+		return unioned
+
+	def difference(self,stock,tool):
+		'''Remove tool circuit from stock circuit in-place.'''
+		# Tool circuit remains and stock circuit is modified.
+		stock.fuse()
+		tool.fuse()
+		stock.elements += tool.elements
+		stock.component = self.backend.difference(stock.component,tool.component)
+		return stock
 
 	def slice_dxf(self,zlist,filename):
 		'''Slice the 3D model, and save DXFs as filename_Lx.dxf'''
 		# TBD: Only works in FreeCAD backend.
-
 		# Go through each z, and through each circuit
 		for i in range(len(zlist)):
 			filelabel = filename + f"_L{i}.dxf"
@@ -91,11 +106,11 @@ class Design:
 			self.backend.export_dxf(sliced,filelabel)
 			
 class Circuit:
-	def __init__(self,design,origin=Pt(0,0,0),**kwargs):
+	def __init__(self,design,name,origin=Pt(0,0,0),**kwargs):
 		'''Construct the Circuit'''
 		self.design = design
 		self.origin = origin
-
+		self.name = f"Circuit{len(design.circuits)}" if name is None else name
 		self.params = self.design.params.copy()
 		for key in kwargs: # Overwrite params with kw params
 			if key in self.params.keys():
@@ -106,37 +121,46 @@ class Circuit:
 		# Create appropriate component for the design's backend
 		self.component = self.design.backend.create_component()
 
-	def clean(self,toFuse=False):
+	def clean(self):
 		'''Deletes the existing sketch and creates a fresh sketch for performance improvements.'''
-		self.design.backend.clean_component(self.component,toFuse)
+		self.component = self.design.backend.clean_component(self.component)
+
+	def fuse(self):
+		'''Fuse all the primitive shapes in a circuit.'''
+		# Not implemented in Fusion360
+		self.component = self.design.backend.fuse_component(self.component)
+
+	def delete(self):
+		'''Delete the circuit object from the design.'''
+		self.design.circuits.remove(self)
+
+	def show(self):
+		'''Render and show the circuit.'''
+		self.design.backend.show_component(self.component,self.name)
 
 	## Elements
 	def T(self,*args,**kwargs):
 		'''Add a Trace to the circuit.'''
 		trace = Trace(self,*args,**kwargs)
 		self.elements.append(trace)
-		# self.clean()
 		return trace
 
 	def V(self,*args,**kwargs):
 		'''Add a Via to the circuit.'''
 		via = Via(self,*args,**kwargs)
 		self.elements.append(via)
-		# self.clean()
 		return via
 
 	def M(self,*args,**kwargs):
 		'''Add a Transistor to the circuit.'''
 		trans = Transistor(self,*args,**kwargs)
 		self.elements.append(trans)
-		# self.clean()
 		return trans
 
 	def R(self,*args,**kwargs):
 		'''Add a Resistor to the circuit.'''
 		res = Resistor(self,*args,**kwargs)
 		self.elements.append(res)
-		# self.clean()
 		return res
 
 	def text(self,*args,**kwargs):
@@ -144,12 +168,10 @@ class Circuit:
 		return
 		txt = Text(self,*args,**kwargs)
 		self.elements.append(txt)
-		# self.clean()
 		return txt
 
 	def rev(self,*args,**kwargs):
 		'''Add a Resistor to the circuit.'''
 		rev = Revolution(self,*args,**kwargs)
 		self.elements.append(rev)
-		# self.clean()
 		return rev

@@ -67,11 +67,10 @@ class FusionBackend(CADBackend):
 		self.clean_component(comp)
 		return comp
 
-	def clean_component(self,comp,toFuse=False):
+	def clean_component(self,comp):
 		'''In-place clean-up of a component for performance.'''
 		# In fusion, can call this after drawing each element
 		# Clears all existing sketches in the component and makes a fresh one
-		# TBD: if toFuse is true, perform a boolean union of all objects
 		for i in range(comp.sketches.count):
 			sketch = comp.sketches.item(i)
 			sketch.deleteMe()
@@ -79,6 +78,10 @@ class FusionBackend(CADBackend):
 		sketch.isComputeDeferred = True # Saves time evaluating
 		sketch.areProfilesShown = False # Saves time drawing
 		sketch.isLightBulbOn = False # Reduce visual clutter
+		return comp
+
+	def fuse_component(self,comp):
+		raise NotImplementedError
 
 	## DRAWING METHODS
 	def create_seg(self,comp,pt1,pt2):
@@ -176,27 +179,51 @@ class FreecadBackend(CADBackend):
 		comp = []
 		return comp
 
-	def clean_component(self, comp, toFuse=False):
+	def clean_component(self, comp):
 		'''Combine existing shapes for speed.'''
-		# toFuse takes longer but fuses parts
-		shapes = [c.removeSplitter() for c in comp 
-		if (type(c) is self.Freecad.Part.Shape)
-		or (type(c) is self.Freecad.Part.Solid)]
-		if toFuse and len(shapes) > 1:
+		# Freecad doesn't need speedups.
+		return comp
+
+	def fuse_component(self, comp):
+		'''Fuse shapes in an existing component.'''
+		types = (self.Freecad.Part.Shape,
+		 		self.Freecad.Part.Solid,
+		 		self.Freecad.Part.Compound)
+		shapes = [s for s in comp if type(s) in types]
+		if len(shapes) > 1:
 			fused = shapes[0].fuse(shapes[1:]) # Tolerance 0.0
-			union = fused.removeSplitter()
-			self.Freecad.Part.show(union)
-			return union
+			return [fused.removeSplitter()]
 		else:
-			compound = self.Freecad.Part.makeCompound(shapes)
-			self.Freecad.Part.show(compound)
-			return compound
+			return shapes
+
+	def show_component(self, comp, name):
+		'''Show the shapes in a component.'''
+		types = (self.Freecad.Part.Shape,
+		 		self.Freecad.Part.Solid,
+		 		self.Freecad.Part.Compound)
+		shapes = [s for s in comp if type(s) in types]
+		for s in shapes: 
+			self.Freecad.Part.show(s,name)
 
 	def slice_component(self,comp,z):
 		'''Return compound of wires formed by XY slicing at z.'''
 		shape = self.Freecad.Part.Shape(self.Freecad.Part.makeCompound(comp))
 		wires = shape.slice(self.pt2cad(Pt(0,0,1e3)),z*self.units)
 		return wires # Return a list of wires
+
+	def union(self,comp1,comp2):
+		'''Union two fused components.'''
+		assert len(comp1) == 1
+		assert len(comp2) == 1
+		fused = comp1[0].fuse(comp2[0])
+		return [fused.removeSplitter()]
+
+	def difference(self,stock,tool):
+		'''Remove tool from stock.'''
+		assert len(stock) == 1
+		assert len(tool) == 1
+		diffed = stock[0].cut(tool[0])
+		return [diffed]
 
 	def export_dxf(self,sliced,filename):
 		'''Saves a list of wires as a dxf using legacy settings.'''
