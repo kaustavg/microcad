@@ -104,6 +104,64 @@ class Design:
 			for cir in self.circuits:
 				sliced += self.backend.slice_component(cir.component,zlist[i])
 			self.backend.export_dxf(sliced,filelabel)
+
+	def draw_wafer(self,H1,H2):
+		''' Helper function to draw wafer and alignment marks.'''
+		cir = self.create_circuit(name='Blanks')
+		W = 100 # Felix marks are ~100um
+		left = self.origin + (-45e3,0)
+		right = self.origin + (45e3,0)
+
+		def alignmentring(cent, r1, r2, n, phase=0):
+			sec1 = RecSec(W=W,H=H1,offset=(0,r1/2+r2/2,0))
+			sec2 = RecSec(W=W,H=H2,offset=(0,r1/2+r2/2,0))
+			for i in range(n):
+				ang = i*360/n
+				norm = (math.cos(ang*math.pi/180),math.sin(ang*math.pi/180),0)
+				sec = sec1 if i%2==phase else sec2
+				cir.rev(cent,sec,norm,-360/n)
+		def alignmentline(p1, p2, phase=0):
+			sec1 = RecSec(W=W/2,H=H1) # Use smaller width here
+			sec2 = RecSec(W=W/2,H=H2)
+			n = int((p2-p1).m//(W/2))
+			for i in range(n):
+				sec = sec1 if i%2==phase else sec2
+				dp = (p2-p1)/n
+				cir.T([p1+(i-.5)*dp,p1+(i+.5)*dp],sec)
+
+		for c in [left, right]:
+			alignmentring(c,0,W,4)
+			alignmentring(c,W,2*W,16)
+			alignmentring(c,2*W,3*W,16,phase=1)
+			side = W*16
+			alignmentline(c+(side/2,side/2),c+(side/2,-side/2))
+			alignmentline(c+(side/2,-side/2),c+(-side/2,-side/2))
+			alignmentline(c+(-side/2,-side/2),c+(-side/2,side/2))
+			alignmentline(c+(-side/2,side/2),c+(side/2,side/2))
+
+		mcir = self.create_circuit('Wafer')
+		for side in [left, right]:
+			for H in [H1,H2]:
+				# Felix's window is 4200 by 2750um
+				mcir.T([side+(-2000,0),side+(2000,0)],secs=RecSec(W=2500,H=H))
+		windowcir = self.difference(mcir,cir)
+		cir.delete()
+
+		def waferoutline(R=52500,W=500):
+			fang = 38 # Subtended angle of flat (deg)
+			dang = 7 # Angle step size (deg)
+			d2r = math.pi/180
+			p = [self.origin+(
+					R*math.cos(d2r*(-90+fang/2+i*dang)),
+					R*math.sin(d2r*(-90+fang/2+i*dang)),0)
+					for i in range((360-fang)//dang+1)]
+			for H in [H1,H2]:
+				sec = RecSec(W=W,H=H)
+				mcir.T(p,sec,trace_cap='round')
+				mcir.T([p[-1],p[0]],sec,trace_cap='round')
+
+		waferoutline(51000,3000) # 52500 to 49500 clear
+		waferoutline(49000,500) # 49250 to 48750 clear
 			
 class Circuit:
 	def __init__(self,design,name,origin=Pt(0,0,0),**kwargs):
