@@ -94,23 +94,26 @@ class Design:
 		stock.component = self.backend.difference(stock.component,tool.component)
 		return stock
 
-	def slice_dxf(self,zlist,filename):
-		'''Slice the 3D model, and save DXFs as filename_Lx.dxf'''
+	def slice_dxf(self,zlist,filename,mirrorlist=False):
+		'''Slice the 3D model, and save DXFs as filename_LXX.dxf'''
 		# TBD: Only works in FreeCAD backend.
 		# Go through each z, and through each circuit
+		zlist = zlist if isinstance(zlist,list) else [zlist]
+		mirrorlist = mirrorlist if isinstance(mirrorlist,list) else [mirrorlist]*len(zlist)
+		assert len(zlist) == len(mirrorlist)
 		for i in range(len(zlist)):
 			filelabel = filename + f"_L{i}.dxf"
 			sliced = []
 			for cir in self.circuits:
 				sliced += self.backend.slice_component(cir.component,zlist[i])
-			self.backend.export_dxf(sliced,filelabel)
+			self.backend.export_dxf(sliced,filelabel,mirrorlist[i])
 
 	def draw_wafer(self,H1,H2):
 		''' Helper function to draw wafer and alignment marks.'''
 		cir = self.create_circuit(name='Blanks')
 		W = 100 # Felix marks are ~100um
-		left = self.origin + (-45e3,0)
-		right = self.origin + (45e3,0)
+		left = self.origin + (-43750,0)
+		right = self.origin + (43750,0)
 
 		def alignmentring(cent, r1, r2, n, phase=0):
 			sec1 = RecSec(W=W,H=H1,offset=(0,r1/2+r2/2,0))

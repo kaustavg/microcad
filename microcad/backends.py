@@ -205,8 +205,9 @@ class FreecadBackend(CADBackend):
 		for s in shapes: 
 			self.Freecad.Part.show(s,name)
 
-	def slice_component(self,comp,z):
+	def slice_component(self,comp,z,mirror=False):
 		'''Return compound of wires formed by XY slicing at z.'''
+		# TBD: Implement mirror
 		shape = self.Freecad.Part.Shape(self.Freecad.Part.makeCompound(comp))
 		wires = shape.slice(self.pt2cad(Pt(0,0,1e3)),z*self.units)
 		return wires # Return a list of wires
@@ -225,13 +226,16 @@ class FreecadBackend(CADBackend):
 		diffed = stock[0].cut(tool[0])
 		return [diffed]
 
-	def export_dxf(self,sliced,filename):
+	def export_dxf(self,sliced,filename,isMirror=False):
 		'''Saves a list of wires as a dxf using legacy settings.'''
 		import importDXF
 
-		comp = self.Freecad.Part.Compound(sliced)
-		obj = self.Freecad.App.ActiveDocument.addObject("Part::Feature","L")
-		obj.Shape = comp
+		c = self.Freecad.Part.Compound(sliced)
+		if isMirror:
+			c = c.mirror(self.pt2cad(Pt(0,0,0)),self.pt2cad(Pt(1e3,0,0)))
+
+		obj = self.Freecad.App.ActiveDocument.addObject("Part::Feature","Slice")
+		obj.Shape = c
 
 		# Import.writeDXFObject(objectslist, filename)
 		if hasattr(importDXF, "exportOptions"):
