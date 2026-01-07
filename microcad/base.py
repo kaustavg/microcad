@@ -133,7 +133,7 @@ class Design:
 			alignmentring(c,0,W,4)
 			alignmentring(c,W,2*W,16)
 			alignmentring(c,2*W,3*W,16,phase=1)
-			side = W*16
+			side = W*8
 			alignmentline(c+(side/2,side/2),c+(side/2,-side/2))
 			alignmentline(c+(side/2,-side/2),c+(-side/2,-side/2))
 			alignmentline(c+(-side/2,-side/2),c+(-side/2,side/2))
@@ -143,7 +143,7 @@ class Design:
 		for side in [left, right]:
 			for H in [H1,H2]:
 				# Felix's window is 4200 by 2750um
-				mcir.T([side+(-2000,0),side+(2000,0)],secs=RecSec(W=2500,H=H))
+				mcir.T([side+(-1500,0),side+(1500,0)],secs=RecSec(W=3000,H=H))
 		windowcir = self.difference(mcir,cir)
 		cir.delete()
 
