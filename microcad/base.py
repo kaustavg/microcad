@@ -7,6 +7,8 @@ from .section import *
 from .elements import *
 from .backends import *
 
+import math
+
 def printm(message):
 	app = adsk.core.Application.get()
 	ui  = app.userInterface
@@ -35,7 +37,7 @@ class Design:
 			'res_L': 1000, # Resistor bounding box length in UM
 			'res_cap': 'none', # Resistor endcap ('none','round','square')
 			'via_R': 350, # Via radius in UM
-			}
+		}
 		for key in params: # Overwrite the defaults
 			self.params[key] = params[key]
 
@@ -48,7 +50,6 @@ class Design:
 			self.backend = FreecadBackend()
 		else:
 			raise NotImplementedError
-
 
 	def create_circuit(self,name=None,*args,**kwargs):
 		'''Return a circuit to the design.'''
@@ -155,16 +156,16 @@ class Design:
 			dang = 7 # Angle step size (deg)
 			d2r = math.pi/180
 			p = [self.origin+(
-					R*math.cos(d2r*(-90+fang/2+i*dang)),
+					R*math.cos(d2r*(-90+fang/2+i*dang)),  # noqa: E126
 					R*math.sin(d2r*(-90+fang/2+i*dang)),0)
-					for i in range((360-fang)//dang+1)]
+					for i in range((360-fang)//dang+1)]  # noqa: E126
 			for H in [H1,H2]:
 				sec = RecSec(W=W,H=H)
 				mcir.T(p,sec,trace_cap='round')
 				mcir.T([p[-1],p[0]],sec,trace_cap='round')
 
-		waferoutline(51000,3000) # 52500 to 49500 clear
-		waferoutline(49000,500) # 49250 to 48750 clear
+		waferoutline(51000,3000)  # 52500 to 49500 clear
+		waferoutline(49000,500)  # 49250 to 48750 clear
 			
 class Circuit:
 	def __init__(self,design,name,origin=Pt(0,0,0),**kwargs):

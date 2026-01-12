@@ -25,8 +25,6 @@ Each backend must support the following operations:
 
 from .point import *
 
-import math
-
 class CADBackend:
 	pass
 
