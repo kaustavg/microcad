@@ -19,4 +19,4 @@ def main():
 	cir.T([tran1.D+(0,-250),tran1.D+(1000,-250),out1.C],trace_R=1000)
 	cir.T([tran1.G1,inp1.C],secs=mc.CurveSec(W=250,H=-30))
 	# Complete
-	design.clean()
+	design.show()
