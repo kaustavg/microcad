@@ -23,7 +23,7 @@ Each backend must support the following operations:
 
 '''
 
-from .point import Point
+from .point import Pt
 
 class CADBackend:
 	pass

@@ -1,6 +1,3 @@
-import sys
-sys.path.append(r'/home/kaustavg/Dropbox/Projects/Starling/microcad/')
-
 import microcad as mc
 
 def main():

@@ -2,7 +2,7 @@
 Base Design and Circuit classes.
 '''
 
-from .point import *
+from .point import Pt
 from .backends import *
 from .section import *
 from .elements import *
