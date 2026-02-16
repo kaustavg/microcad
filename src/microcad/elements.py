@@ -130,9 +130,9 @@ class Trace:
 		# Draw endcaps (TBD: 'square' is only axis aligned right now)
 		# TBD: trace_cap is only accurate for RecSec, others make rectangular cap!
 		if self.params['trace_cap'] == 'round':
-			circuit.V(pts[0],zspan=[pts[0].z,pts[0].z+secs[0].H],
+			circuit.V(pts[0]+secs[0].offset,zspan=[pts[0].z,pts[0].z+secs[0].H],
 				via_R=secs[0].span/2)
-			circuit.V(pts[-1],zspan=[pts[-1].z,pts[-1].z+secs[-1].H],
+			circuit.V(pts[-1]+secs[-1].offset,zspan=[pts[-1].z,pts[-1].z+secs[-1].H],
 				via_R=secs[-1].span/2)
 		elif self.params['trace_cap'] == 'square':
 			circuit.T([pts[0]-(secs[0].span/2,0),pts[0]+(secs[0].span/2,0)],
