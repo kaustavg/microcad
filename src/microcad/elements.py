@@ -4,8 +4,7 @@ Elements classes.
 import math
 import copy
 
-from .base import *
-from .point import *
+from .point import Point
 from .section import *
 
 class Trace:

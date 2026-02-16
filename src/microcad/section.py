@@ -4,7 +4,7 @@ Section classes.
 
 import math
 
-from .point import *
+from .point import Point
 
 
 class Section:

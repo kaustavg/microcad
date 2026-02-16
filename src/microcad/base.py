@@ -3,9 +3,10 @@ Base Design and Circuit classes.
 '''
 
 from .point import *
+from .backends import *
 from .section import *
 from .elements import *
-from .backends import *
+
 
 import math
 
