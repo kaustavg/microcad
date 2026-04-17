@@ -221,7 +221,7 @@ class Transistor:
 
 class Resistor:
 	def __init__(self,circuit,pt,val,anchor='L',rotation=0,justify='left',**kwargs):
-		'''Constructor for transistor.'''
+		'''Constructor for resistor (left-right).'''
 		self.circuit = circuit
 		self.pt = Pt(*pt) if isinstance(pt,tuple) else pt
 		pt = self.pt
