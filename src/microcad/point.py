@@ -30,15 +30,20 @@ class Pt:
 	def __str__(self):
 		return str((round(self.x,2),round(self.y,2),round(self.z,2)))
 
-	def rotate(self,degrees,center=(0,0,0)):
-		'''Returns a rotated point in 2D around a center.'''
+	def rot(self,deg,pts):
+		'''Return a point or list of points rotated in XY around self.'''
 		# Rotation units are degrees!
-		d = self-center
-		rads = math.pi * degrees / 180
-		return center+Pt(
-			d.x*math.cos(rads)-d.y*math.sin(rads),
-			d.y*math.cos(rads)+d.x*math.sin(rads),
-			d.z)
+		isList = isinstance(pts,list)
+		pts = [pts] if not isList else pts
+		rotated = []
+		for pt in pts:
+			d = pt-self
+			rads = math.pi * deg / 180
+			rotated.append(center+Pt(
+				d.x*math.cos(rads)-d.y*math.sin(rads),
+				d.y*math.cos(rads)+d.x*math.sin(rads),
+				d.z))
+		return rotated[0] if not isList else rotated
 
 	def dot(self,other):
 		'''Returns the dot product of two point vectors.'''
