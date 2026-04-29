@@ -39,7 +39,7 @@ class Pt:
 		for pt in pts:
 			d = pt-self
 			rads = math.pi * deg / 180
-			rotated.append(center+Pt(
+			rotated.append(self+Pt(
 				d.x*math.cos(rads)-d.y*math.sin(rads),
 				d.y*math.cos(rads)+d.x*math.sin(rads),
 				d.z))

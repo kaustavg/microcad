@@ -200,11 +200,8 @@ class Transistor:
 			Pt(0,L/2),Pt(0,-L/2)]
 		anchors = ['C','S','D','G1','G2','P1','P2']
 		a = points[anchors.index(anchor)]
-		# Center over anchor
-		points = [point - a for point in points]
-		# Rotate and shift as needed
-		points = [pt+point.rotate(rotation) for point in points]
-
+		# Rotate and shift around anchor
+		points = [pt + point - a for point in a.rot(rotation,points)]
 		# Draw
 		circuit.T([points[1],points[5],points[6],points[2]],
 			secs=self.chan_sec,trace_cap='none')
@@ -286,11 +283,8 @@ class Resistor:
 		anchor_pts = [Pt(), Pt(L/2,0), Pt(L,0)]
 		anchors = ['L','C','R']
 		a = anchor_pts[anchors.index(anchor)]
-		# Center over anchor
-		points = [point - a for point in points]
-		# Rotate and shift as needed
-		points = [pt+point.rotate(rotation) for point in points]
-
+		# Rotate and shift around anchor
+		points = [pt + point - a for point in a.rot(rotation,points)]
 		# Draw
 		circuit.T(points,secs=secs,trace_R=R*.75,
 			trace_cap=self.params['res_cap'])
