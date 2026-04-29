@@ -31,7 +31,7 @@ class Pt:
 		return str((round(self.x,2),round(self.y,2),round(self.z,2)))
 
 	def rot(self,deg,pts):
-		'''Return a point or list of points rotated in XY around self.'''
+		'''Rotate a given point or list of points around self (in XY).'''
 		# Rotation units are degrees!
 		isList = isinstance(pts,list)
 		pts = [pts] if not isList else pts
