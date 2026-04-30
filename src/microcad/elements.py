@@ -155,12 +155,13 @@ class Via:
 			if key in self.params.keys():
 				self.params[key] = kwargs[key]
 		self.zspan = [0, self.params['sub_H']] if zspan is None else zspan
+		self.zspan = [self.params['sub_H'] if z is None else z for z in self.zspan]
 		zspan = self.zspan
 		
 		# Draw
 		R = self.params['via_R']
-		start = Pt(pt.x,pt.y,zspan[0])
-		end = Pt(pt.x,pt.y,zspan[1])
+		start = Pt(pt.x,pt.y,self.zspan[0])
+		end = Pt(pt.x,pt.y,self.zspan[1])
 		circuit.T([start,end],secs=TubeSec(R=R),trace_cap=None)
 
 		# Set the pin
