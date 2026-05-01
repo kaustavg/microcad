@@ -130,9 +130,11 @@ class Trace:
 		# Draw endcaps (TBD: 'square' is only axis aligned right now)
 		# TBD: trace_cap is only accurate for RecSec, others make rectangular cap!
 		if self.params['trace_cap'] == 'round':
-			circuit.V(pts[0]+secs[0].offset,zspan=[pts[0].z,pts[0].z+secs[0].H],
+			circuit.V(pts[0]+secs[0].offset,
+				zspan=[pts[0].z+secs[0].offset.z,pts[0].z+secs[0].offset.z+secs[0].H],
 				via_R=secs[0].span/2)
-			circuit.V(pts[-1]+secs[-1].offset,zspan=[pts[-1].z,pts[-1].z+secs[-1].H],
+			circuit.V(pts[-1]+secs[-1].offset,
+				zspan=[pts[-1].z+secs[-1].offset.z,pts[-1].z+secs[-1].offset.z+secs[-1].H],
 				via_R=secs[-1].span/2)
 		elif self.params['trace_cap'] == 'square':
 			circuit.T([pts[0]-(secs[0].span/2,0),pts[0]+(secs[0].span/2,0)],
@@ -147,7 +149,7 @@ class Trace:
 
 
 class Via:
-	def __init__(self,circuit,pt,zspan=None,**kwargs):
+	def __init__(self,circuit,pt,zspan=[0,None],**kwargs):
 		'''Constructor for a via.'''
 		self.circuit = circuit
 		self.pt = Pt(*pt) if isinstance(pt,tuple) else pt
@@ -156,9 +158,7 @@ class Via:
 		for key in kwargs: # Overwrite params with kw params
 			if key in self.params.keys():
 				self.params[key] = kwargs[key]
-		self.zspan = [0, self.params['sub_H']] if zspan is None else zspan
-		self.zspan = [self.params['sub_H'] if z is None else z for z in self.zspan]
-		zspan = self.zspan
+		self.zspan = [self.params['sub_H'] if z is None else z for z in zspan]
 		
 		# Draw
 		R = self.params['via_R']
@@ -188,15 +188,12 @@ class Transistor:
 		# Drawing parameters
 		self.chan_sec = self.params['chan_sec']
 		self.gate_sec = self.params['gate_sec']
-		if invert: # TBD: Make inversion a method which returns a new sec
-			self.chan_sec = copy.deepcopy(self.chan_sec)
-			self.chan_sec.H *= -1
-			self.gate_sec = copy.deepcopy(self.gate_sec)
-			self.gate_sec.H *= -1
+		if invert:
+			self.chan_sec *= -1
+			self.gate_sec *= -1
 		slop = self.params['slop']
 		L = self.gate_sec.span
 		W = self.chan_sec.span
-		H = self.chan_sec.H
 
 		# Compute draw points
 		points = [Pt(), Pt(0,L/2+slop), Pt(0,-L/2-slop),
@@ -241,9 +238,8 @@ class Resistor:
 		L = self.params['res_L']
 		R_sec = self.params['res_sec']
 		T_sec = self.params['trace_sec']
-		if R_sec.H < 0:# TBD: Make inversion a method which returns a new sec
-			T_sec = copy.deepcopy(T_sec)
-			T_sec.H *= -1
+		if R_sec.H < 0:
+			T_sec *= -1
 		R = R_sec.span
 		T = T_sec.span
 

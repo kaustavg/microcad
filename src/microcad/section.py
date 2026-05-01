@@ -14,8 +14,9 @@ class Section:
 	# Note: When drawing, make span of all sections slightly smaller than stated
 	# to avoid floating point errors when lofting.
 	eps = 0
+	mem_D = 20 # Default membrane thickness (Warning: May break old designs!)
 
-	def inv(self,mem_D=20):
+	def inv(self,mem_D=mem_D):
 		'''Return a copied section with inverted height in Z (if possible).'''
 		# This is only applicable for 2.5D sections (not TubeSec).
 		# Will offset appropriately based on mem_D so that membrane is below z=0.
@@ -23,7 +24,7 @@ class Section:
 		copied = copy.deepcopy(self) # Must use deepcopy to deepcopy Points
 		if hasattr(copied,'H'):
 			copied.H = -copied.H
-		copied.offset.Z = -mem_D - copied.offset.Z
+		copied.offset.z = -mem_D - copied.offset.z
 		return copied
 
 	def __eq__(self, other): 
