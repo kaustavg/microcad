@@ -3,21 +3,37 @@ Section classes.
 '''
 
 import math
+import copy
 
 from .point import Pt
 
 
 class Section:
-	# TBD: Implement a method called "invert" to return a new section with 
-	# inverted height in Z. Currently, we just copy the section and rewrite the 
-	# value for Section.H to -Section.H
+	'''Cross-sections to be swept along a path to make components.'''
 
 	# Note: When drawing, make span of all sections slightly smaller than stated
 	# to avoid floating point errors when lofting.
-	eps = 0 # 1 nm
-	def __eq__(self, other) : 
-	# Equality is used to determine whether to use loft or sweep
+	eps = 0
+
+	def inv(self,mem_D=20):
+		'''Return a copied section with inverted height in Z (if possible).'''
+		# This is only applicable for 2.5D sections (not TubeSec).
+		# Will offset appropriately based on mem_D so that membrane is below z=0.
+
+		copied = copy.deepcopy(self) # Must use deepcopy to deepcopy Points
+		if hasattr(copied,'H'):
+			copied.H = -copied.H
+		copied.offset.Z = -mem_D - copied.offset.Z
+		return copied
+
+	def __eq__(self, other): 
+		# Equality is used to determine whether to use loft or sweep
 		return self.__dict__ == other.__dict__
+
+	def __neg__(self):
+		# Equivalent to calling self.inv()
+		return self.inv()
+
 
 class RecSec(Section):
 	def __init__(self, W=250, H=50, offset=(0,0,0)):
@@ -59,6 +75,7 @@ class RecSec(Section):
 			segs.append(backend.create_seg(comp,pts[i-1],pts[i]))
 		path = backend.create_path(comp,segs)
 		return path
+
 
 class CurveSec(Section):
 	def __init__(self, W=250, H=50, R=None, offset=(0,0,0)):
@@ -134,6 +151,7 @@ class CurveSec(Section):
 			path = backend.create_path(comp,objs)
 			return path
 
+
 class TrapzSec(Section):
 	def __init__(self, W=250, H=50, Wt=None, Ht=None, offset=(0,0,0)):
 		'''Constructor for Trapezoidal Section.'''
@@ -176,6 +194,7 @@ class TrapzSec(Section):
 			segs.append(backend.create_seg(comp,pts[i-1],pts[i]))
 		path = backend.create_path(comp,segs)
 		return path
+
 
 class TubeSec(Section):
 	def __init__(self, R=250, offset=(0,0,0)):

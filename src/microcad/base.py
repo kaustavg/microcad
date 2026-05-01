@@ -27,17 +27,18 @@ class Design:
 			'fluid_Mu':1.01e-3, # Fluid dynamic viscosity in Pa*s
 			# Fab parameters
 			'slop': 250, # Slop in alignment to space elements in UM
-			'sub_H': 4000, # Substrate thickness in UM
+			'sub_H': 1000, # Substrate thickness in UM
+			'mem_D': 20, # Membrane thickness in UM (modify gate_sec too)
 			# Element parameters
 			'trace_sec': RecSec(W=250, H=50), # Default section
 			'trace_R': 0, # Trace radius of curvature in UM
 			'trace_cap': 'none', # Trace endcap ('none','round','square')
 			'chan_sec': RecSec(W=250, H=50), # Transistor flow channel section
-			'gate_sec': RecSec(W=250, H=-50), # Transistor gate section
+			'gate_sec': -RecSec(W=250, H=50), # Transistor gate section
 			'res_sec': RecSec(W=50, H=50), # Resistor section
 			'res_L': 1000, # Resistor bounding box length in UM
 			'res_cap': 'none', # Resistor endcap ('none','round','square')
-			'via_R': 350, # Via radius in UM
+			'via_R': 500, # Via radius in UM
 		}
 		for key in params: # Overwrite the defaults
 			self.params[key] = params[key]

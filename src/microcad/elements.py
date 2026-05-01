@@ -7,6 +7,7 @@ import copy
 from .point import Pt
 from .section import *
 
+
 class Trace:
 	def __init__(self,circuit,pts,secs=None,**kwargs):
 		'''Constructor for a trace.'''
@@ -144,6 +145,7 @@ class Trace:
 		self.P2 = pts[-1]
 		self.C = self.P1 % self.P2
 
+
 class Via:
 	def __init__(self,circuit,pt,zspan=None,**kwargs):
 		'''Constructor for a via.'''
@@ -166,6 +168,7 @@ class Via:
 
 		# Set the pin
 		self.C = pt
+
 
 class Transistor:
 	def __init__(self,circuit,pt,anchor='C',rotation=0,invert=False,**kwargs):
@@ -217,6 +220,7 @@ class Transistor:
 		self.P1 = points[5]
 		self.P2 = points[6]
 
+
 class Resistor:
 	def __init__(self,circuit,pt,val,anchor='L',rotation=0,justify='left',**kwargs):
 		'''Constructor for resistor (left-right).'''
@@ -260,7 +264,7 @@ class Resistor:
 		# Place points
 		points = [Pt()]
 		secs = [T_sec]
-		last_pt = Pt()+((L - (n*R*4))/2 ,0)
+		last_pt = Pt()+((L - (n*R*4))/2,0)
 		points.append(last_pt) # Inlet wedge
 		secs.append(R_sec)
 		for i in range(n):
@@ -294,6 +298,7 @@ class Resistor:
 		self.L = points[0]
 		self.R = points[-1]
 		self.C = self.L%self.R
+
 
 class Revolution:
 	def __init__(self,circuit,pt,sec,norm,ang,offset=(0,0,0),axis=(0,0,1)):
