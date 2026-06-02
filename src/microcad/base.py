@@ -227,6 +227,12 @@ class Circuit:
 		self.elements.append(res)
 		return res
 
+	def S(self,*args,**kwargs):
+		'''Add a Switch to the circuit.'''
+		switch = Switch(self,*args,**kwargs)
+		self.elements.append(switch)
+		return switch
+
 	def text(self,*args,**kwargs):
 		'''Add text to the circuit.'''
 		return

@@ -189,8 +189,8 @@ class Transistor:
 		self.chan_sec = self.params['chan_sec']
 		self.gate_sec = self.params['gate_sec']
 		if invert:
-			self.chan_sec *= -1
-			self.gate_sec *= -1
+			self.chan_sec = -self.chan_sec
+			self.gate_sec = -self.gate_sec
 		slop = self.params['slop']
 		L = self.gate_sec.span
 		W = self.chan_sec.span
@@ -239,7 +239,7 @@ class Resistor:
 		R_sec = self.params['res_sec']
 		T_sec = self.params['trace_sec']
 		if R_sec.H < 0:
-			T_sec *= -1
+			T_sec = -T_sec
 		R = R_sec.span
 		T = T_sec.span
 
@@ -294,6 +294,53 @@ class Resistor:
 		self.L = points[0]
 		self.R = points[-1]
 		self.C = self.L%self.R
+
+class Switch:
+	def __init__(self,circuit,pt,anchor='C',rotation=0,invert=False,**kwargs):
+		'''Constructor for switch.'''
+		# Oriented such that channel is U<>D and gate is L<>R.
+		self.circuit = circuit
+		self.pt = Pt(*pt) if isinstance(pt,tuple) else pt
+		pt = self.pt
+		self.anchor = anchor
+		self.rotation = rotation
+		self.invert = invert # If true, flip each channel section in Z
+		self.params = circuit.params.copy()
+		for key in kwargs: # Overwrite params with kw params
+			if key in self.params.keys():
+				self.params[key] = kwargs[key]
+
+		# Drawing parameters
+		self.chan_sec = self.params['chan_sec']
+		self.gate_sec = self.params['gate_sec']
+		if invert:
+			self.chan_sec = -self.chan_sec
+			self.gate_sec = -self.gate_sec
+		slop = self.params['slop']
+		L = self.gate_sec.span
+		W = self.chan_sec.span
+
+		# Compute draw points
+		points = [Pt(), Pt(0,L/2+slop), Pt(0,-L/2-slop),
+			Pt(-W/2-slop,0), Pt(W/2+slop,0),
+			Pt(0,L/2),Pt(0,-L/2)]
+		anchors = ['C','S','D','G1','G2','P1','P2']
+		a = points[anchors.index(anchor)]
+		# Rotate and shift around anchor
+		points = [pt + point - a for point in a.rot(rotation,points)]
+		# Draw
+		circuit.T([points[1],points[5],points[6],points[2]],
+			secs=self.chan_sec,trace_cap='none')
+		circuit.T([points[3],points[4]],secs=self.gate_sec,trace_cap='none')
+
+		# Set the pins
+		self.C = points[0]
+		self.S = points[1]
+		self.D = points[2]
+		self.G1 = points[3]
+		self.G2 = points[4]
+		self.P1 = points[5]
+		self.P2 = points[6]
 
 
 class Revolution:
