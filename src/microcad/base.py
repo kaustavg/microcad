@@ -233,6 +233,12 @@ class Circuit:
 		self.elements.append(switch)
 		return switch
 
+	def C(self,*args,**kwargs):
+		'''Add a Grid Capacitor to the circuit.'''
+		cap = Capacitor(self,*args,**kwargs)
+		self.elements.append(cap)
+		return cap
+
 	def text(self,*args,**kwargs):
 		'''Add text to the circuit.'''
 		return

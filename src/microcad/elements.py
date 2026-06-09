@@ -238,7 +238,7 @@ class Resistor:
 		L = self.params['res_L']
 		R_sec = self.params['res_sec']
 		T_sec = self.params['trace_sec']
-		if R_sec.H < 0:
+		if R_sec.H*T_sec.H < 0:
 			T_sec = -T_sec
 		R = R_sec.span
 		T = T_sec.span
@@ -341,6 +341,77 @@ class Switch:
 		self.G2 = points[4]
 		self.P1 = points[5]
 		self.P2 = points[6]
+
+class Capacitor:
+	def __init__(self,circuit,pt,nr,nc,anchor='L',rotation=0,justify='left',
+		anode_sec=None,cathode_sec=None,**kwargs):
+		'''Constructor for grid capacitor (left-right).'''
+		self.circuit = circuit
+		self.pt = Pt(*pt) if isinstance(pt,tuple) else pt
+		pt = self.pt
+		self.nr = max(1,round(nr))
+		nr = self.nr
+		self.nc = max(1,round(nc))
+		nc = self.nc
+		self.anchor = anchor
+		self.rotation = rotation
+		self.justify = justify
+		self.params = circuit.params.copy()
+		for key in kwargs: # Overwrite params with kw params
+			if key in self.params.keys():
+				self.params[key] = kwargs[key]
+		self.anode_sec = self.params['chan_sec'] if anode_sec is None else anode_sec
+		self.cathode_sec = self.params['gate_sec'] if cathode_sec is None else cathode_sec
+
+		xspace = cathode_sec.span*2
+		yspace = anode_sec.span*2
+		xsize = (self.nc-1)*xspace
+		ysize = (self.nr-1)*yspace
+		anode = [] # List of points to connect with traces
+		cathode = [] # List of points to connect with traces
+		o = Pt() # Origin
+
+		# Anode borders
+		if self.nr > 1:
+			anode.append([o+(0,-ysize/2),o+(0,ysize/2)])
+			anode.append([o+(xsize+2*xspace,-ysize/2),o+(xsize+2*xspace,ysize/2)])
+		# Anode crosses
+		pos = o + (0,-ysize/2)
+		for i in range(self.nr):
+			anode.append([pos,pos+(xsize+2*xspace,0)])
+			pos += (0,yspace)
+		# Cathode borders
+		if self.nc > 1:
+			top = o+(xsize+xspace,-ysize/2-yspace)
+			cathode.append([o+(xspace,-ysize/2-yspace),top])
+			bot = o+(xsize+xspace,ysize/2+yspace)
+			cathode.append([o+(xspace,ysize/2+yspace),bot])
+		# Cathode crosses
+		pos = o + (xspace,-ysize/2-yspace)
+		for j in range(self.nc):
+			cathode.append([pos,pos+(0,ysize+2*yspace)])
+			pos += (xspace,0)
+		# Tail of cathode
+		right = (top|o)+(xspace*3,0)
+		cathode.append([top,top+(xspace*2,0),right])
+		cathode.append([bot,bot+(xspace*2,0),right])
+
+		# Determine anchor
+		anchor_pts = [o, o%right, right]
+		anchors = ['L','C','R']
+		a = anchor_pts[anchors.index(anchor)]
+		# Rotate and shift around anchor and draw
+		for pts in anode:
+			pts = [self.pt + point - a for point in a.rot(rotation,pts)]
+			circuit.T(pts,secs=anode_sec,trace_cap='round')
+		for pts in cathode:
+			pts = [self.pt + point - a for point in a.rot(rotation,pts)]
+			circuit.T(pts,secs=cathode_sec,trace_cap='round')
+
+		# Set the pins
+		self.L = self.pt + a.rot(rotation,o) - a
+		self.R = self.pt + a.rot(rotation,right) - a
+		self.C = self.L%self.R
 
 
 class Revolution:
