@@ -363,8 +363,8 @@ class Capacitor:
 		self.anode_sec = self.params['chan_sec'] if anode_sec is None else anode_sec
 		self.cathode_sec = self.params['gate_sec'] if cathode_sec is None else cathode_sec
 
-		xspace = cathode_sec.span*2
-		yspace = anode_sec.span*2
+		xspace = self.cathode_sec.span*2
+		yspace = self.anode_sec.span*2
 		xsize = (self.nc-1)*xspace
 		ysize = (self.nr-1)*yspace
 		anode = [] # List of points to connect with traces
@@ -403,10 +403,10 @@ class Capacitor:
 		# Rotate and shift around anchor and draw
 		for pts in anode:
 			pts = [self.pt + point - a for point in a.rot(rotation,pts)]
-			circuit.T(pts,secs=anode_sec,trace_cap='round')
+			circuit.T(pts,secs=self.anode_sec,trace_cap='round')
 		for pts in cathode:
 			pts = [self.pt + point - a for point in a.rot(rotation,pts)]
-			circuit.T(pts,secs=cathode_sec,trace_cap='round')
+			circuit.T(pts,secs=self.cathode_sec,trace_cap='round')
 
 		# Set the pins
 		self.L = self.pt + a.rot(rotation,o) - a
