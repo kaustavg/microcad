@@ -23,6 +23,8 @@ Each backend must support the following operations:
 
 '''
 
+import os
+
 from .point import Pt
 
 class CADBackend:
@@ -138,6 +140,9 @@ class FusionBackend(CADBackend):
 		# loft_inp.endLoftEdgeAlignment = self.adsk.fusion.LoftEdgeAlignments.AlignToSurfaceLoftEdgeAlignment;
 		loft = comp.features.loftFeatures.add(loft_inp)
 		return loft
+
+	def create_text(self,comp,pt,text,zspan,size):
+		raise NotImplementedError
 
 class FreecadBackend(CADBackend):
 	def __init__(self):
@@ -345,3 +350,13 @@ class FreecadBackend(CADBackend):
 		comp.append(solid)
 		# self.Freecad.Part.show(solid)
 		return solid
+
+	def create_text(self, comp, pt, text, zspan, size):
+		'''Return extruded text.'''
+		font = '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'
+		font = font if os.path.exists(font) else ''
+		for wire in self.Freecad.Part.makeWireString(text, font, size*self.units, 0):
+			face = self.Freecad.Part.Face(wire)
+			face.translate(self.pt2cad(Pt(pt.x,pt.y,zspan[0])))
+			solid = face.extrude(self.pt2cad(Pt(0,0,zspan[1]-zspan[0])))
+			comp.append(solid)
