@@ -434,32 +434,18 @@ class Revolution:
 		rev = circuit.design.backend.create_revolution(comp,
 			draw,self.pt+self.offset,self.axis,self.ang)
 
-# class Text:
-# 	def __init__(self,circuit,pt,text,zspan=None,size=300,**kwargs):
-# 		'''Constructor for text.'''
-# 		self.circuit = circuit
-# 		self.pt = Pt(*pt) if isinstance(pt,tuple) else pt
-# 		pt = self.pt
-# 		self.text = text
-# 		self.size = size
-# 		self.params = circuit.params.copy()
-# 		for key in kwargs: # Overwrite params with kw params
-# 			if key in self.params.keys():
-# 				self.params[key] = kwargs[key]
-# 		self.zspan = [0, self.params['sub_H']] if zspan is None else zspan
-
-# 		endpt = pt + (1e5,1) # Global word wrap at 10cm long
-# 		texts = circuit._sketch.sketchTexts
-# 		inp = texts.createInput2(text,size*circuit.design.units) # Size in cm from size in um
-# 		inp.setAsMultiLine(pt.acadPoint3D,endpt.acadPoint3D,
-# 			adsk.core.HorizontalAlignments.LeftHorizontalAlignment,
-# 			adsk.core.VerticalAlignments.TopVerticalAlignment, 0)
-# 		inp.fontName = 'Lucida Console'
-# 		inp.textStyle = 5 #BoldUnderline (TBD: Doesnt work)
-# 		sketch_text = texts.add(inp)
-# 		if zspan[1] != 0:
-# 			distup = adsk.core.ValueInput.createByReal(zspan[1]*circuit.design.units)
-# 			circuit._comp.features.extrudeFeatures.addSimple(sketch_text, distup, adsk.fusion.FeatureOperations.NewBodyFeatureOperation) 
-# 		if zspan[0] != 0:
-# 			distdown = adsk.core.ValueInput.createByReal(zspan[0]*circuit.design.units)
-# 			circuit._comp.features.extrudeFeatures.addSimple(sketch_text, distdown, adsk.fusion.FeatureOperations.NewBodyFeatureOperation) 
+class Text:
+	def __init__(self,circuit,pt,text,zspan=None,size=300,**kwargs):
+		'''Constructor for text.'''
+		self.circuit = circuit
+		self.pt = Pt(*pt) if isinstance(pt,tuple) else pt
+		self.text = text
+		self.size = size
+		self.params = circuit.params.copy()
+		for key in kwargs: # Overwrite params with kw params
+			if key in self.params.keys():
+				self.params[key] = kwargs[key]
+		self.zspan = [0, self.params['sub_H']] if zspan is None else \
+			[self.params['sub_H'] if z is None else z for z in zspan]
+		circuit.design.backend.create_text(
+			circuit.component,self.pt,self.text,self.zspan,self.size)

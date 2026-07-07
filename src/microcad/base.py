@@ -241,7 +241,6 @@ class Circuit:
 
 	def text(self,*args,**kwargs):
 		'''Add text to the circuit.'''
-		return
 		txt = Text(self,*args,**kwargs)
 		self.elements.append(txt)
 		return txt
