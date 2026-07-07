@@ -130,6 +130,8 @@ class Trace:
 		# Draw endcaps (TBD: 'square' is only axis aligned right now)
 		# TBD: trace_cap is only accurate for RecSec, others make rectangular cap!
 		if self.params['trace_cap'] == 'round':
+			# circuit.rev(pts[0]+secs[0].offset,secs[0],us[0],180,(0,0,0),(0,0,1))
+			# circuit.rev(pts[-1]+secs[-1].offset,secs[-1],us[-1],-180,(0,0,0),(0,0,1))
 			circuit.V(pts[0]+secs[0].offset,
 				zspan=[pts[0].z+secs[0].offset.z,pts[0].z+secs[0].offset.z+secs[0].H],
 				via_R=secs[0].span/2)
@@ -295,6 +297,7 @@ class Resistor:
 		self.R = points[-1]
 		self.C = self.L%self.R
 
+
 class Switch:
 	def __init__(self,circuit,pt,anchor='C',rotation=0,invert=False,**kwargs):
 		'''Constructor for switch.'''
@@ -341,6 +344,7 @@ class Switch:
 		self.G2 = points[4]
 		self.P1 = points[5]
 		self.P2 = points[6]
+
 
 class Capacitor:
 	def __init__(self,circuit,pt,nr,nc,anchor='L',rotation=0,justify='left',

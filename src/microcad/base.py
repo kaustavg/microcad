@@ -247,7 +247,7 @@ class Circuit:
 		return txt
 
 	def rev(self,*args,**kwargs):
-		'''Add a Resistor to the circuit.'''
+		'''Add a Revolution to the circuit.'''
 		rev = Revolution(self,*args,**kwargs)
 		self.elements.append(rev)
 		return rev
