@@ -48,6 +48,7 @@ class RecSec(Section):
 		# Multiply following by mu*L to obtain resistance in SI
 		# This has units of 1/(m^4)
 		self.res_muL = 12/((1-0.63*(h/w))*h**3*w)
+		self.area = h*w # m^2
 
 	def draw(self,circuit,pc,n):
 		'''Return the path centered around pc normal to n.'''
@@ -101,6 +102,7 @@ class CurveSec(Section):
 		# Note: the rectangle approximation ALSO underestimates true resistance 
 		# (due to chamfers), but not by much.
 		self.res_muL = 12/((1-0.63*(h/w))*h**3*w)
+		self.area = w*h - 2*r*r + 0.5*math.pi*r*r # m^2
 
 	def draw(self,circuit,pc,n):
 		'''Return the path centered around pc normal to n.'''
@@ -126,7 +128,6 @@ class CurveSec(Section):
 		backend = circuit.design.backend
 		comp = circuit.component
 		segs = []
-		eps = 1e-3
 
 		# Add fillets at top
 		if abs(R) - abs(H) < 1: # Fully curved top
@@ -208,6 +209,7 @@ class TubeSec(Section):
 		# Multiply following by mu*L to obtain resistance in SI
 		# This has units of 1/(m^4)
 		self.res_muL = 8/(math.pi*r**4)
+		self.area = math.pi*r*r # m^2
 
 	def draw(self,circuit,pc,n):
 		'''Return the path centered around pc normal to n.'''

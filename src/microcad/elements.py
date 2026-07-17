@@ -37,6 +37,7 @@ class Trace:
 		# Check for length mismatches
 		assert len(pts) == len(secs)
 		assert len(pts) == len(Rs)
+
 		'''
 		Generate the whole segs w/ pts and normals, then sweep or loft pieces
 
@@ -68,11 +69,13 @@ class Trace:
 		'''
 		backend = circuit.design.backend
 		comp = circuit.component
-		# Compute unit normals
+		# Compute unit normals and approximate volume (no radius or endcaps)
 		us = []
+		self.volume = 0
 		for i in range(len(pts)-1):
 			d = pts[i+1]-pts[i]
 			us.append(d/d.m)
+			self.volume += 1e-6*d.m*(secs[i+1].area+secs[i].area)/2 # m^3
 		
 		# Initialize growing lists of segs and draw tuples
 		segs = [backend.create_seg(comp,pts[0],pts[1])]
@@ -247,6 +250,7 @@ class Resistor:
 
 		# Compute the number of wiggles that fit
 		n = math.floor((L-T)//(R*4))
+		assert n > 0, f"Resistor {L-T-4*R}um too short to fit serpentine."
 		# Compute the centerline distance with minimum wiggle amplitude
 		wiggle_dist = n*(2*R + math.pi*R)
 		# Compute the the wedge distances for entry and exit
@@ -366,6 +370,10 @@ class Capacitor:
 				self.params[key] = kwargs[key]
 		self.anode_sec = self.params['chan_sec'] if anode_sec is None else anode_sec
 		self.cathode_sec = self.params['gate_sec'] if cathode_sec is None else cathode_sec
+
+		# Compute maximum volume
+		self.cathode_vol = cathode_sec.area*anode_sec.span*1e-6*nr*nc
+		self.anode_vol = anode_sec.area*cathode_sec.span*1e-6*nr*nc
 
 		xspace = self.cathode_sec.span*2
 		yspace = self.anode_sec.span*2
